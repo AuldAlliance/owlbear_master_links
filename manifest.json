@@ -1,0 +1,15 @@
+{
+  "name": "Token Links",
+  "version": "1.0",
+  "manifest_version": 1,
+  "description": "Manage and view external links, images and notes for your tokens and assets.",
+  "author": "Stephen Mackintosh",
+  "icon": "https://auldalliance.github.io/my-owlbear-extension/icon2.png",
+  "action": {
+    "title": "Token Links",
+    "icon": "https://auldalliance.github.io/my-owlbear-extension/icon2.png",
+    "popover": "https://auldalliance.github.io/my-owlbear-extension/index.html",
+    "width": 450,
+    "height": 650
+  }
+}
