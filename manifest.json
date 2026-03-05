@@ -4,10 +4,10 @@
   "manifest_version": 1,
   "description": "Manage GM links.",
   "author": "Stephen Mackintosh",
-  "icon": "https://auldalliance.github.io/owlbear_master_links/icon1.svg",
+  "icon": "https://auldalliance.github.io/owlbear_master_links/icon1.png",
   "action": {
     "title": "GM Links",
-    "icon": "https://auldalliance.github.io/owlbear_master_links/icon1.svg",
+    "icon": "https://auldalliance.github.io/owlbear_master_links/icon1.png",
     "popover": "https://auldalliance.github.io/owlbear_master_links/index.html",
     "width": 400,
     "height": 400
