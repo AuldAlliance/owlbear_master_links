@@ -3,322 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Token Stats & Notes</title>
+    <title>GM Quick Links</title>
     <style>
-        html { background: transparent !important; }
         body { 
-            background: rgba(32, 33, 36, 0.2) !important; 
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            color: white; font-family: sans-serif; padding: 12px; margin: 0; 
-            display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; overflow: hidden;
+            background: rgba(32, 33, 36, 0.9); 
+            color: white; 
+            font-family: sans-serif; 
+            padding: 15px; 
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
-        .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 6px; margin-bottom: 10px; flex-shrink: 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);}
-        #status { font-size: 10px; letter-spacing: 0.5px; white-space: nowrap;color: #aaa; font-weight: bold; text-transform: uppercase; overflow: hidden;text-overflow: ellipsis;max-width: 180px;}
-        
-        .tabs { display: flex; gap: 4px; margin-bottom: 8px; flex-shrink: 0; }
-        .tab-btn { 
-            flex: 1; padding: 8px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); 
-            color: #888; cursor: pointer; font-size: 9px; font-weight: bold; border-radius: 4px 4px 0 0;
-            transition: all 0.2s ease;
+        .link-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 8px;
+            margin-bottom: 10px;
         }
-        .tab-btn.active-tab { background: rgba(255,255,255,0.1); color: white; border-bottom: 2px solid #2196F3; }
-
-        .controls { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; margin-bottom: 12px; }
-        #gmTools { display: flex; flex-direction: column; gap: 8px; border: 1px solid rgba(255, 255, 255, 0.1); padding: 8px; border-radius: 6px; background: rgba(0, 0, 0, 0.2); }
-        .gm-action-row { display: flex; align-items: center; gap: 8px; }
-
-        .eye-container { position: relative; width: 34px; height: 28px; flex-shrink: 0; }
-        #privateCheck { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; z-index: 2; margin: 0; }
-        .eye-button { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 4px; display: flex; align-items: center; justify-content: center; pointer-events: none; box-sizing: border-box; }
-        .eye-button svg { width: 16px; height: 16px; fill: #bbb; }
-        #privateCheck:checked + .eye-button { border-color: #f28b82; background: rgba(242, 139, 130, 0.1); }
-        #privateCheck:checked + .eye-button svg { fill: #f28b82; }
-
-        button { cursor: pointer; border-radius: 4px; font-weight: bold; text-transform: uppercase; font-size: 10px; color: white; border: none; transition: background 0.2s; }
-        #popoutBtn { width: 34px; height: 28px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 0;}
-
-        input[type="text"] { width: 100%; padding: 8px; box-sizing: border-box; background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; outline: none; font-size: 11px; }
-        input[type="text"]:focus { border-color: #2196F3; }
-        
-        #contentArea { flex-grow: 1; position: relative; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 4px; background: rgba(0,0,0,0.2); overflow: hidden; }
-        .layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; visibility: hidden; border: none; }
-        .active { visibility: visible; }
-
-        #notesArea { padding: 12px; box-sizing: border-box; color: #ddd; resize: none; font-family: inherit; font-size: 14px; background: transparent; width: 100%; height: 100%; border: none; outline: none; line-height: 1.4; }
-        #handoutLayer { display: flex; align-items: center; justify-content: center; padding: 10px; box-sizing: border-box; }
-        #handoutImg { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 4px; }
-        .placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #888; font-style: italic; text-align: center; padding: 20px; gap: 10px; }
-
-        /* 1. Base state: Empty tabs are subtle/faded */
-        .tab-btn {
-            opacity: 0.4;
-            filter: grayscale(100%);
-            border-bottom: 2px solid transparent;
+        .action-btn {
+            background: #2196F3;
+            border: none;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+            font-size: 11px;
+            transition: background 0.2s;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-        
-        /* 2. Content state: Tab looks 'ready' */
-        .tab-btn.has-content {
-            opacity: 0.8;
-            filter: grayscale(0%);
-            color: #fff; /* Brighter text */
+        .action-btn:hover { background: #1976D2; }
+        .action-btn:disabled { background: #444; cursor: not-allowed; opacity: 0.5; }
+
+        .gm-editor {
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 10px;
+            display: none; /* Hidden by default for players */
         }
-        
-        /* 3. Active state: The tab the user is currently viewing */
-        .tab-btn.active-tab {
-            opacity: 1 !important; /* Force full visibility */
-            background: rgba(255, 255, 255, 0.1);
-            border-bottom: 2px solid #2196F3;
+        .link-row {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 8px;
         }
-        
-        /* Optional: Add a subtle glow to tabs with content */
-        .tab-btn.has-content:not(.active-tab) {
-            text-shadow: 0 0 5px rgba(33, 150, 243, 0.4);
+        input {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 6px;
+            font-size: 11px;
+            border-radius: 3px;
+            flex: 1;
         }
+        .label-input { flex: 0 0 80px; }
+        .save-banner { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 5px; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div id="statusContainer" style="display: flex; align-items: center; gap: 8px; overflow: hidden;">
-            <img id="tokenThumb" src="" style="display: none; width: 24px; height: 24px; border-radius: 4px; object-fit: cover; border: 1px solid rgba(255,255,255,0.2);">
-            <div id="status">Ready</div>
-        </div>
-    </div>
 
-    <div class="tabs">
-        <button id="tabUrl" class="tab-btn active-tab">LINK</button>
-        <button id="tabNotes" class="tab-btn">NOTES</button>
-        <button id="tabHandout" class="tab-btn">VISUAL</button>
-    </div>
-    
-    <div class="controls">
-        <div id="gmTools">
-            <input type="text" id="urlInput" placeholder="Enter URL and press Enter to save...">
-            <div id="controlRow" class="gm-action-row">
-                <div id="privateToggleContainer" class="eye-container" title="Toggle Private/Public">
-                    <input type="checkbox" id="privateCheck" checked>
-                    <div class="eye-button">
-                        <svg class="eye-open" viewBox="0 0 24 24"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
-                    </div>
-                </div>
-                <button id="popoutBtn" title="Open in new window">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
-                </button>
+    <div id="buttonContainer" class="link-grid">
+        </div>
+
+    <div id="gmPanel" class="gm-editor">
+        <div class="save-banner">Edit GM Links (Names & URLs)</div>
+        <div id="inputContainer">
             </div>
-        </div>
+        <button id="saveBtn" class="action-btn" style="width: 100%; margin-top: 5px; background: #4CAF50;">Save Settings</button>
     </div>
 
-    <div id="contentArea">
-        <iframe id="statsFrame" class="layer" style="background:white; width:100%; height:100%;"></iframe>
-        <textarea id="notesArea" class="layer" placeholder="Type notes here..."></textarea>
-        <div id="handoutLayer" class="layer"><img id="handoutImg" src="" alt="Handout"></div>
-        <div id="noSelectionMsg" class="layer placeholder active">Select a token to begin.</div>    
-    </div>
-
-    <script type="module">
+<script type="module">
     import OBR from "https://cdn.jsdelivr.net/npm/@owlbear-rodeo/sdk@latest/+esm";
-    const ID = "com.auldalliance.stats-linker";
-    const STORAGE_KEY = `${ID}_last_token_id`;
+
+    const ID = "com.auldalliance.gm-links";
+    const META_KEY = `${ID}/links`;
 
     OBR.onReady(async () => {
         const role = await OBR.player.getRole();
-        const isGM = role === "GM";
-        const input = document.getElementById('urlInput');
-        const controlRow = document.getElementById('controlRow');
-        const notesArea = document.getElementById('notesArea');
-        const handoutImg = document.getElementById('handoutImg');
-        const statsFrame = document.getElementById('statsFrame');
-        const privateCheck = document.getElementById('privateCheck');
-        const privateToggleContainer = document.getElementById('privateToggleContainer');
-        const popoutBtn = document.getElementById('popoutBtn');
-        
-        let currentTab = 'url';
-        let currentMetadata = { url: "", note: "", handout: "", private: true };
+        if (role === "GM") document.getElementById('gmPanel').style.display = 'block';
 
-        const saveToToken = async () => {
-            const tokenId = localStorage.getItem(STORAGE_KEY);
+        // Initialize 5 empty slots
+        const setupInputs = () => {
+            const container = document.getElementById('inputContainer');
+            for (let i = 0; i < 5; i++) {
+                const row = document.createElement('div');
+                row.className = 'link-row';
+                row.innerHTML = `
+                    <input type="text" class="label-input" id="name-${i}" placeholder="Label ${i+1}">
+                    <input type="text" class="url-input" id="url-${i}" placeholder="https://...">
+                `;
+                container.appendChild(row);
+            }
+        };
 
-            const isPrivate = currentMetadata.private ?? true;
-            // Allow save if user is GM OR if the token is not private
-            if (!tokenId || (!isGM && isPrivate)) return;
+        const renderButtons = (links) => {
+            const container = document.getElementById('buttonContainer');
+            container.innerHTML = '';
+            links.forEach(link => {
+                if (link.url) {
+                    const btn = document.createElement('button');
+                    btn.className = 'action-btn';
+                    btn.innerText = link.name || "Link";
+                    btn.onclick = () => {
+                        const formatted = link.url.startsWith('http') ? link.url : `https://${link.url}`;
+                        window.open(formatted, '_blank', 'width=800,height=600');
+                    };
+                    container.appendChild(btn);
+                }
+            });
+            // If no links, show placeholder
+            if (container.innerHTML === '') {
+                container.innerHTML = '<div style="font-size:11px; color:#666; grid-column: 1/-1;">No GM links defined.</div>';
+            }
+        };
 
-            await OBR.scene.items.updateItems([tokenId], (items) => {
-                for (let item of items) {
-                    let val = input.value.trim();
-                    if (currentTab === 'url') {
-                        if (val.includes("bestiary.html#")) {
-                            val = decodeURIComponent(val).replace("bestiary.html#", "bestiary/").replace(/ /g, "-").replace(/_/g, "-") + ".html";
-                            input.value = val;
-                        }
-                        item.metadata[`${ID}/url`] = val;
-                        currentMetadata.url = val;
-                    } else if (currentTab === 'handout') {
-                        item.metadata[`${ID}/handout`] = val;
-                        currentMetadata.handout = val;
+        const loadData = async () => {
+            const metadata = await OBR.room.getMetadata();
+            const savedLinks = metadata[META_KEY] || [];
+            
+            // Fill inputs if GM
+            if (role === "GM") {
+                savedLinks.forEach((link, i) => {
+                    if (i < 5) {
+                        document.getElementById(`name-${i}`).value = link.name || '';
+                        document.getElementById(`url-${i}`).value = link.url || '';
                     }
-                    item.metadata[`${ID}/private`] = privateCheck.checked;
-                    item.metadata[`${ID}/note`] = notesArea.value;
-                    currentMetadata.private = privateCheck.checked;
-                    currentMetadata.note = notesArea.value;
-                }
-            });
-        };
-
-        input.onkeydown = (e) => { if (e.key === 'Enter') saveToToken(); };
-        input.oninput = () => { if (input.value.trim() === "") saveToToken(); };
-        privateCheck.onchange = saveToToken;
-        notesArea.onblur = saveToToken;
-
-        const switchTab = (tab) => {
-            currentTab = tab;
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active-tab'));
-            document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`)?.classList.add('active-tab');
-            const isNotes = tab === 'notes';
-            const isHandout = tab === 'handout';
-            if (isGM) {
-                input.style.display = isNotes ? "none" : "block";
-                popoutBtn.style.display = isNotes ? "none" : "flex"; 
-            } else {
-                // 1. Hide the URL input if it's the Notes OR Handout tab
-                const isShared = isHandout || isNotes;
-                input.style.display = isShared ? "none" : "block"; 
-                
-                // 2. Show the row (the container) for Handout, but not for Notes
-                controlRow.style.display = (tab === 'handout' || !isShared) ? "flex" : "none";
-                
-                // 3. Keep the GM-only toggle hidden
-                privateToggleContainer.style.display = "none";
-                
-                // 4. Show the Popout button on Handout or the main URL tab
-                popoutBtn.style.display = (tab === 'handout' || !isShared) ? "flex" : "none";
+                });
             }
-            input.value = isHandout ? (currentMetadata.handout || "") : (currentMetadata.url || "");
-            refreshUI();
+            renderButtons(savedLinks);
         };
 
-        const refreshUI = () => {
-            const isPrivate = currentMetadata.private ?? true;
-            const msgElement = document.getElementById('noSelectionMsg');
-        
-            // Player Privacy Logic
-            if (!isGM) {
-                const urlTab = document.getElementById('tabUrl');
-                const notesTab = document.getElementById('tabNotes');
-                if (isPrivate) {
-                    urlTab.style.display = "none";
-                    notesTab.style.display = "none";
-                    if (currentTab !== 'handout') return switchTab('handout');
-                } else {
-                    urlTab.style.display = "block";
-                    notesTab.style.display = "block";
-                }
+        const saveData = async () => {
+            const links = [];
+            for (let i = 0; i < 5; i++) {
+                const name = document.getElementById(`name-${i}`).value;
+                const url = document.getElementById(`url-${i}`).value;
+                if (url) links.push({ name, url });
             }
-
-            const urlTab = document.getElementById('tabUrl');
-            const notesTab = document.getElementById('tabNotes');
-            const handoutTab = document.getElementById('tabHandout');
-        
-            // Toggle the 'has-content' class
-            urlTab.classList.toggle('has-content', !!currentMetadata.url);
-            handoutTab.classList.toggle('has-content', !!currentMetadata.handout);
-            notesTab.classList.toggle('has-content', !!currentMetadata.note && currentMetadata.note.trim() !== "");
-                
-            // Guidance Logic
-            if (currentTab === 'notes') {
-                showLayer('notesArea');
-            } 
-            else if (currentTab === 'handout') {
-                if (currentMetadata.handout) {
-                    if (handoutImg.src !== currentMetadata.handout) handoutImg.src = currentMetadata.handout;
-                    showLayer('handoutLayer');
-                } else {
-                    msgElement.innerText = "No VISUAL URL entered for token";
-                    showLayer('noSelectionMsg');
-                }
-            } 
-            else if (currentTab === 'url') {
-                if (currentMetadata.url) {
-                    const formattedUrl = currentMetadata.url.startsWith('http') ? currentMetadata.url : `https://${currentMetadata.url}`;
-                    if (statsFrame.src !== formattedUrl) statsFrame.src = formattedUrl;
-                    showLayer('statsFrame');
-                } else {
-                    msgElement.innerText = "No LINK URL entered for token.";
-                    showLayer('noSelectionMsg');
-                }
-            }
+            await OBR.room.setMetadata({ [META_KEY]: links });
+            OBR.notification.show("Links updated!");
         };
 
-        const showLayer = (id) => {
-            ['statsFrame', 'notesArea', 'handoutLayer', 'noSelectionMsg'].forEach(l => {
-                document.getElementById(l).classList.toggle('active', l === id);
-            });
-        };
+        setupInputs();
+        await loadData();
 
-        const syncFromToken = async (selection) => {
-            let tokenId = selection?.[0] || localStorage.getItem(STORAGE_KEY);
-            const status = document.getElementById('status');
-            const thumb = document.getElementById('tokenThumb');
-            
-            if (!tokenId) {
-                status.innerText = "Awaiting Selection...";
-                status.style.color = "#888"; // Dim the text when nothing is selected
-                thumb.style.display = "none";
-                return showLayer('noSelectionMsg');
-            }
-            
-            const items = await OBR.scene.items.getItems([tokenId]);
-            const token = items[0];
-            
-            if (token) {
-                // PRIORITY: Use the text field, then name, then fallback
+        document.getElementById('saveBtn').onclick = saveData;
 
-                // 1. Handle the Thumbnail
-                if (token.image && token.image.url) {
-                    thumb.src = token.image.url;
-                    thumb.style.display = "block";
-                } else {
-                    thumb.style.display = "none";
-                }
-                
-                const tokenName = token.text?.plainText || token.name || "Unnamed Token";
-                // Update the header with the token name
-                status.innerHTML = `<span style="color: #aaa; font-size: 9px;">EDITING:</span> <span style="color: #2196F3;">${tokenName.toUpperCase()}</span>`;                
-                status.style.color = "#aaa";
-                
-                localStorage.setItem(STORAGE_KEY, tokenId);
-                currentMetadata = {
-                    url: token.metadata[`${ID}/url`] || "",
-                    note: token.metadata[`${ID}/note`] || "",
-                    handout: token.metadata[`${ID}/handout`] || "",
-                    private: token.metadata[`${ID}/private`] ?? true
-                };
-       
-                if (document.activeElement !== input) {
-                    input.value = (currentTab === 'handout') ? currentMetadata.handout : currentMetadata.url;
-                }
-                privateCheck.checked = currentMetadata.private;
-           
-                if (document.activeElement !== notesArea) notesArea.value = currentMetadata.note;
-                refreshUI();
-            }
-        };
-
-        document.getElementById('tabUrl').onclick = () => switchTab('url');
-        document.getElementById('tabNotes').onclick = () => switchTab('notes');
-        document.getElementById('tabHandout').onclick = () => switchTab('handout');
-        
-        popoutBtn.onclick = () => {
-            const url = input.value.trim() || currentMetadata.url;
-            if (url) window.open(url.startsWith('http') ? url : `https://${url}`, "_blank", "width=600,height=700");
-        };
-          
-        OBR.player.onChange(p => syncFromToken(p.selection));
-        OBR.scene.items.onChange(() => {
-           const activeId = localStorage.getItem(STORAGE_KEY);
-           if (activeId) syncFromToken([activeId]);
+        // Listen for changes from other GM sessions
+        OBR.room.onMetadataChange((meta) => {
+            if (meta[META_KEY]) renderButtons(meta[META_KEY]);
         });
-
-        syncFromToken(await OBR.player.getSelection());
     });
 </script>
 </body>
