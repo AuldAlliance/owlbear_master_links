@@ -70,14 +70,13 @@
         .icon-btn:hover { color: white; }
 
         #gmPanel {
-            display: none; /* Hidden by default */
+            display: none;
             background: rgba(0, 0, 0, 0.3);
             border-radius: 8px;
             margin-top: 8px;
             padding: 10px;
-            overflow-y: auto;
-            max-height: 250px;
             border: 1px solid var(--border);
+            /* Scrollbar and Max-Height removed to show all links when expanded */
         }
 
         .row {
@@ -99,9 +98,6 @@
         .label-in { width: 70px; }
         .url-in { flex-grow: 1; }
         .section-label { font-size: 9px; color: #aaa; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px;}
-        
-        #gmPanel::-webkit-scrollbar { width: 4px; }
-        #gmPanel::-webkit-scrollbar-thumb { background: #666; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -131,12 +127,12 @@
 
     OBR.onReady(async () => {
         const role = await OBR.player.getRole();
+        
+        // Initial window sizing
         if (role === "GM") {
             document.getElementById('gmOnly').style.display = 'block';
-            // Start the window small for the GM
-            await OBR.action.setHeight(85);
+            await OBR.action.setHeight(85); 
         } else {
-            // Start the window small for Players
             await OBR.action.setHeight(50);
         }
 
@@ -201,15 +197,15 @@
             renderButtons(links);
         };
 
-        // --- UPDATED TOGGLE LOGIC ---
+        // Dynamic Toggle Logic
         document.getElementById('toggleSettings').onclick = async () => {
             const panel = document.getElementById('gmPanel');
             if (panel.style.display === 'block') {
                 panel.style.display = 'none';
-                await OBR.action.setHeight(85); // Shrink
+                await OBR.action.setHeight(85); 
             } else {
                 panel.style.display = 'block';
-                await OBR.action.setHeight(400); // Expand
+                await OBR.action.setHeight(450); // Tall enough for all 10 rows
             }
         };
 
