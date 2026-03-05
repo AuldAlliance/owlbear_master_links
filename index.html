@@ -10,6 +10,7 @@
             --bg: transparent; 
             --panel: rgba(255, 255, 255, 0.1);
             --border: rgba(255, 255, 255, 0.2);
+            --active-green: #2e7d32;
         }
         body { 
             background: transparent; 
@@ -28,6 +29,7 @@
         .link-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(2, auto);
             gap: 6px;
             margin-bottom: 4px;
         }
@@ -42,16 +44,30 @@
             font-weight: 600;
             text-transform: uppercase;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s;
             text-align: center;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        .action-btn:hover {
-            background: var(--primary);
-            border-color: #64b5f6;
+        /* Highlighting for populated buttons */
+        .action-btn.active {
+            background: var(--active-green);
+            border-color: #4caf50;
+            opacity: 1;
+        }
+        .action-btn.active:hover {
+            background: #388e3c;
+            transform: translateY(-1px);
+        }
+
+        /* Styling for empty buttons */
+        .action-btn:not(.active) {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px dashed rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.2);
+            cursor: default;
         }
 
         .editor-toggle {
@@ -76,7 +92,6 @@
             margin-top: 8px;
             padding: 10px;
             border: 1px solid var(--border);
-            /* Scrollbar and Max-Height removed to show all links when expanded */
         }
 
         .row {
@@ -128,12 +143,11 @@
     OBR.onReady(async () => {
         const role = await OBR.player.getRole();
         
-        // Initial window sizing
         if (role === "GM") {
             document.getElementById('gmOnly').style.display = 'block';
-            await OBR.action.setHeight(85); 
+            await OBR.action.setHeight(110); // Slightly taller for two rows
         } else {
-            await OBR.action.setHeight(50);
+            await OBR.action.setHeight(80);
         }
 
         const setupInputs = () => {
@@ -153,21 +167,24 @@
         const renderButtons = (links) => {
             const container = document.getElementById('buttonContainer');
             container.innerHTML = '';
-            links.forEach(link => {
+            
+            for (let i = 0; i < 10; i++) {
+                const link = links[i] || {};
+                const btn = document.createElement('button');
+                btn.className = 'action-btn';
+                
                 if (link.url && link.url.trim() !== "") {
-                    const btn = document.createElement('button');
-                    btn.className = 'action-btn';
-                    btn.innerText = link.name || "LINK";
+                    btn.classList.add('active');
+                    btn.innerText = link.name || `Link ${i + 1}`;
                     btn.title = link.url;
                     btn.onclick = () => {
                         const url = link.url.startsWith('http') ? link.url : `https://${link.url}`;
                         window.open(url, '_blank', 'width=800,height=600');
                     };
-                    container.appendChild(btn);
+                } else {
+                    btn.innerText = "—"; // Minimal indicator for empty
                 }
-            });
-            if (container.children.length === 0) {
-                container.innerHTML = '<div style="grid-column: 1/-1; font-size:10px; color:#888; text-align:center; padding:10px; border: 1px dashed rgba(255,255,255,0.1); border-radius:4px;">Add links via the gear icon</div>';
+                container.appendChild(btn);
             }
         };
 
@@ -176,7 +193,7 @@
             for (let i = 0; i < 10; i++) {
                 const name = document.getElementById(`n-${i}`).value;
                 const url = document.getElementById(`u-${i}`).value;
-                if (url) links.push({ name, url });
+                links.push({ name, url }); // Push empty ones too to preserve order
             }
             await OBR.room.setMetadata({ [META_KEY]: links });
         };
@@ -197,15 +214,14 @@
             renderButtons(links);
         };
 
-        // Dynamic Toggle Logic
         document.getElementById('toggleSettings').onclick = async () => {
             const panel = document.getElementById('gmPanel');
             if (panel.style.display === 'block') {
                 panel.style.display = 'none';
-                await OBR.action.setHeight(85); 
+                await OBR.action.setHeight(110); 
             } else {
                 panel.style.display = 'block';
-                await OBR.action.setHeight(450); // Tall enough for all 10 rows
+                await OBR.action.setHeight(480); 
             }
         };
 
