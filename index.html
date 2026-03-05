@@ -3,108 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GM Quick Links & Preview</title>
+    <title>GM Dashboard</title>
     <style>
-        body { 
-            background: rgba(32, 33, 36, 0.9); 
-            color: white; 
-            font-family: sans-serif; 
-            padding: 12px; 
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            min-height: 100vh;
-            box-sizing: border-box;
+        :root {
+            --primary: #2196F3;
+            --bg: rgba(30, 31, 34, 0.95);
+            --panel: rgba(255, 255, 255, 0.05);
+            --border: rgba(255, 255, 255, 0.1);
         }
+        body { 
+            background: transparent; 
+            color: #eee; 
+            font-family: 'Segoe UI', Roboto, sans-serif; 
+            padding: 10px; 
+            margin: 0;
+            overflow: hidden;
+        }
+        .container {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        /* Dashboard Grid */
         .link-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-            gap: 6px;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: 8px;
+            margin-bottom: 8px;
         }
         .action-btn {
-            background: #2196F3;
-            border: none;
+            background: var(--panel);
+            border: 1px solid var(--border);
             color: white;
-            padding: 8px;
-            border-radius: 4px;
-            font-weight: bold;
-            cursor: pointer;
+            padding: 12px 6px;
+            border-radius: 6px;
             font-size: 10px;
+            font-weight: 600;
             text-transform: uppercase;
-            transition: background 0.2s;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
         }
-        .action-btn:hover { background: #1976D2; }
+        .action-btn:hover {
+            background: var(--primary);
+            border-color: #64b5f6;
+            transform: translateY(-1px);
+        }
+        /* GM Editor Toggle */
+        .editor-toggle {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 4px;
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            padding: 4px;
+        }
+        .icon-btn:hover { color: white; }
 
-        .gm-editor {
-            border-top: 1px solid rgba(255,255,255,0.1);
-            padding-top: 10px;
+        /* Settings Panel */
+        #gmPanel {
             display: none;
+            border-top: 1px solid var(--border);
+            margin-top: 10px;
+            padding-top: 10px;
         }
-        .link-row {
+        .row {
             display: flex;
             gap: 4px;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
         }
         input {
-            background: rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--border);
             color: white;
             padding: 6px;
             font-size: 11px;
-            border-radius: 3px;
-        }
-        .label-input { width: 80px; }
-        .url-input { flex-grow: 1; }
-        
-        #previewContainer {
-            margin-top: 10px;
-            flex-grow: 1;
-            border: 1px solid rgba(255,255,255,0.1);
             border-radius: 4px;
-            background: #fdfdfd;
-            height: 250px; /* Default height */
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            outline: none;
         }
-        .preview-header {
-            background: #333;
-            color: #aaa;
-            font-size: 9px;
-            padding: 4px 8px;
-            text-transform: uppercase;
-            display: flex;
-            justify-content: space-between;
-        }
-        #previewFrame {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-        .save-banner { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 5px; }
+        input:focus { border-color: var(--primary); }
+        .label-in { width: 70px; }
+        .url-in { flex-grow: 1; }
+        .section-label { font-size: 9px; color: #666; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px;}
     </style>
 </head>
 <body>
 
-    <div id="buttonContainer" class="link-grid"></div>
+<div class="container">
+    <div id="buttonContainer" class="link-grid">
+        </div>
 
-    <div id="gmPanel" class="gm-editor">
-        <div class="save-banner">Edit Links (Click label to preview)</div>
-        <div id="inputContainer"></div>
-        <button id="saveBtn" class="action-btn" style="width: 100%; margin-top: 8px; background: #4CAF50;">Save Room Links</button>
-        
-        <div id="previewContainer">
-            <div class="preview-header">
-                <span>Quick Preview</span>
-                <span id="previewUrlDisplay">No site selected</span>
-            </div>
-            <iframe id="previewFrame" src="about:blank"></iframe>
+    <div id="gmOnly" style="display:none;">
+        <div class="editor-toggle">
+            <button class="icon-btn" id="toggleSettings" title="Configure Links">
+                <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.17.31a1.464 1.464 0 0 1-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.31-.17a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.17-.31a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.31.17a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg>
+            </button>
+        </div>
+
+        <div id="gmPanel">
+            <div class="section-label">Link Settings (Auto-Saves)</div>
+            <div id="inputList"></div>
         </div>
     </div>
+</div>
 
 <script type="module">
     import OBR from "https://cdn.jsdelivr.net/npm/@owlbear-rodeo/sdk@latest/+esm";
@@ -114,32 +122,19 @@
 
     OBR.onReady(async () => {
         const role = await OBR.player.getRole();
-        const previewFrame = document.getElementById('previewFrame');
-        const previewUrlDisplay = document.getElementById('previewUrlDisplay');
-
-        if (role === "GM") document.getElementById('gmPanel').style.display = 'block';
-
-        const updatePreview = (index) => {
-            const urlValue = document.getElementById(`url-${index}`).value.trim();
-            if (urlValue) {
-                const formatted = urlValue.startsWith('http') ? urlValue : `https://${urlValue}`;
-                previewFrame.src = formatted;
-                previewUrlDisplay.innerText = urlValue;
-            }
-        };
+        if (role === "GM") document.getElementById('gmOnly').style.display = 'block';
 
         const setupInputs = () => {
-            const container = document.getElementById('inputContainer');
+            const list = document.getElementById('inputList');
             for (let i = 0; i < 5; i++) {
                 const row = document.createElement('div');
-                row.className = 'link-row';
+                row.className = 'row';
                 row.innerHTML = `
-                    <input type="text" class="label-input" id="name-${i}" placeholder="Label ${i+1}">
-                    <input type="text" class="url-input" id="url-${i}" placeholder="https://...">
+                    <input type="text" class="label-in" id="n-${i}" placeholder="Name">
+                    <input type="text" class="url-in" id="u-${i}" placeholder="URL">
                 `;
-                // Trigger preview when clicking the name field
-                row.querySelector('.label-input').onclick = () => updatePreview(i);
-                container.appendChild(row);
+                row.querySelectorAll('input').forEach(el => el.oninput = () => saveData());
+                list.appendChild(row);
             }
         };
 
@@ -150,47 +145,48 @@
                 if (link.url) {
                     const btn = document.createElement('button');
                     btn.className = 'action-btn';
-                    btn.innerText = link.name || "Link";
+                    btn.innerText = link.name || "Open";
                     btn.onclick = () => {
-                        const formatted = link.url.startsWith('http') ? link.url : `https://${link.url}`;
-                        window.open(formatted, '_blank', 'width=800,height=600');
+                        const url = link.url.startsWith('http') ? link.url : `https://${link.url}`;
+                        window.open(url, '_blank', 'width=800,height=600');
                     };
                     container.appendChild(btn);
                 }
             });
         };
 
+        const saveData = async () => {
+            const links = [];
+            for (let i = 0; i < 5; i++) {
+                const name = document.getElementById(`n-${i}`).value;
+                const url = document.getElementById(`u-${i}`).value;
+                if (url) links.push({ name, url });
+            }
+            await OBR.room.setMetadata({ [META_KEY]: links });
+        };
+
         const loadData = async () => {
-            const metadata = await OBR.room.getMetadata();
-            const savedLinks = metadata[META_KEY] || [];
+            const meta = await OBR.room.getMetadata();
+            const links = meta[META_KEY] || [];
             if (role === "GM") {
-                savedLinks.forEach((link, i) => {
+                links.forEach((l, i) => {
                     if (i < 5) {
-                        document.getElementById(`name-${i}`).value = link.name || '';
-                        document.getElementById(`url-${i}`).value = link.url || '';
+                        document.getElementById(`n-${i}`).value = l.name || '';
+                        document.getElementById(`u-${i}`).value = l.url || '';
                     }
                 });
             }
-            renderButtons(savedLinks);
+            renderButtons(links);
+        };
+
+        document.getElementById('toggleSettings').onclick = () => {
+            const panel = document.getElementById('gmPanel');
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
         };
 
         setupInputs();
         await loadData();
-
-        document.getElementById('saveBtn').onclick = async () => {
-            const links = [];
-            for (let i = 0; i < 5; i++) {
-                const name = document.getElementById(`name-${i}`).value;
-                const url = document.getElementById(`url-${i}`).value;
-                if (url) links.push({ name, url });
-            }
-            await OBR.room.setMetadata({ [META_KEY]: links });
-            OBR.notification.show("Settings Saved");
-        };
-
-        OBR.room.onMetadataChange((meta) => {
-            if (meta[META_KEY]) renderButtons(meta[META_KEY]);
-        });
+        OBR.room.onMetadataChange((meta) => { if (meta[META_KEY]) renderButtons(meta[META_KEY]); });
     });
 </script>
 </body>
