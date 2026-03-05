@@ -7,45 +7,42 @@
     <style>
         :root {
             --primary: #2196F3;
-            /* We remove the solid background and use transparent instead */
-            --bg: transparent; 
             --panel: rgba(255, 255, 255, 0.1);
-            --border: rgba(255, 255, 255, 0.2);
+            --border: rgba(255, 255, 255, 0.15);
         }
+
         body { 
             background: transparent; 
             color: #eee; 
             font-family: 'Segoe UI', Roboto, sans-serif; 
-            padding: 4px; 
+            padding: 8px; 
             margin: 0;
-            overflow: hidden; /* Prevents double scrollbars */
+            overflow: hidden; /* Important: prevents double scrollbars during resize */
         }
+
         .container {
-            background: var(--bg);
-            /* Removed the heavy border and background to let OBR glass show */
             display: flex;
             flex-direction: column;
-            max-height: 100vh;
+            width: 100%;
         }
-        
+
         .link-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 6px;
-            margin-bottom: 4px;
         }
 
         .action-btn {
             background: var(--panel);
             border: 1px solid var(--border);
             color: white;
-            padding: 8px 2px;
+            padding: 10px 2px;
             border-radius: 6px;
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 600;
             text-transform: uppercase;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s;
             text-align: center;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -55,66 +52,77 @@
         .action-btn:hover {
             background: var(--primary);
             border-color: #64b5f6;
+            transform: translateY(-1px);
         }
 
         .editor-toggle {
             display: flex;
             justify-content: flex-end;
-            margin-top: 2px;
+            margin-top: 4px;
         }
 
         .icon-btn {
             background: none;
             border: none;
-            color: rgba(255,255,255,0.4);
+            color: rgba(255, 255, 255, 0.3);
             cursor: pointer;
             padding: 4px;
+            transition: color 0.2s;
         }
         .icon-btn:hover { color: white; }
 
+        /* Settings Panel */
         #gmPanel {
             display: none;
-            background: rgba(0, 0, 0, 0.3); /* Slight darkening for the settings area */
+            border-top: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.2);
             border-radius: 8px;
-            margin-top: 8px;
+            margin-top: 4px;
             padding: 10px;
             overflow-y: auto;
             max-height: 250px;
-            border: 1px solid var(--border);
         }
 
         .row {
             display: flex;
             gap: 4px;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
         }
 
         input {
-            background: rgba(0,0,0,0.4);
+            background: rgba(0, 0, 0, 0.3);
             border: 1px solid var(--border);
             color: white;
-            padding: 5px;
+            padding: 6px;
             font-size: 11px;
             border-radius: 4px;
             outline: none;
         }
         input:focus { border-color: var(--primary); }
-        .label-in { width: 70px; }
+        .label-in { width: 80px; }
         .url-in { flex-grow: 1; }
-        .section-label { font-size: 9px; color: #aaa; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px;}
         
+        .section-label { 
+            font-size: 9px; 
+            color: #888; 
+            text-transform: uppercase; 
+            margin-bottom: 10px; 
+            letter-spacing: 1px;
+        }
+
+        /* Scrollbar for Settings */
         #gmPanel::-webkit-scrollbar { width: 4px; }
-        #gmPanel::-webkit-scrollbar-thumb { background: #666; border-radius: 10px; }
+        #gmPanel::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="container" id="mainContainer">
     <div id="buttonContainer" class="link-grid"></div>
 
     <div id="gmOnly" style="display:none;">
         <div class="editor-toggle">
-            <button class="icon-btn" id="toggleSettings" title="Configure 10 Links">
+            <button class="icon-btn" id="toggleSettings" title="Configure Links">
                 <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.17.31a1.464 1.464 0 0 1-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.31-.17a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.17-.31a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.31.17a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg>
             </button>
         </div>
@@ -132,6 +140,21 @@
     const ID = "com.auldalliance.gm-links";
     const META_KEY = `${ID}/links`;
 
+    /**
+     * Resizes the OBR viewport to match the current content height.
+     */
+    const syncHeight = () => {
+        // Use requestAnimationFrame to wait for the next render cycle
+        requestAnimationFrame(() => {
+            const container = document.getElementById('mainContainer');
+            if (container) {
+                const height = container.offsetHeight;
+                // Add a small 16px buffer for padding/stability
+                OBR.viewport.setHeight(height + 16);
+            }
+        });
+    };
+
     OBR.onReady(async () => {
         const role = await OBR.player.getRole();
         if (role === "GM") document.getElementById('gmOnly').style.display = 'block';
@@ -145,7 +168,9 @@
                     <input type="text" class="label-in" id="n-${i}" placeholder="Label">
                     <input type="text" class="url-in" id="u-${i}" placeholder="URL">
                 `;
-                row.querySelectorAll('input').forEach(el => el.oninput = () => saveData());
+                row.querySelectorAll('input').forEach(el => {
+                    el.oninput = () => saveData();
+                });
                 list.appendChild(row);
             }
         };
@@ -153,6 +178,7 @@
         const renderButtons = (links) => {
             const container = document.getElementById('buttonContainer');
             container.innerHTML = '';
+            
             links.forEach(link => {
                 if (link.url && link.url.trim() !== "") {
                     const btn = document.createElement('button');
@@ -166,48 +192,16 @@
                     container.appendChild(btn);
                 }
             });
+
             if (container.children.length === 0) {
-                container.innerHTML = '<div style="grid-column: 1/-1; font-size:10px; color:#888; text-align:center; padding:10px; border: 1px dashed rgba(255,255,255,0.1); border-radius:4px;">Add links via the gear icon</div>';
+                container.innerHTML = '<div style="grid-column: 1/-1; font-size:10px; color:#666; text-align:center; padding:10px; border: 1px dashed var(--border);">Click gear to setup links</div>';
             }
+            
+            syncHeight();
         };
 
         const saveData = async () => {
             const links = [];
             for (let i = 0; i < 10; i++) {
                 const name = document.getElementById(`n-${i}`).value;
-                const url = document.getElementById(`u-${i}`).value;
-                if (url) links.push({ name, url });
-            }
-            await OBR.room.setMetadata({ [META_KEY]: links });
-        };
-
-        const loadData = async () => {
-            const meta = await OBR.room.getMetadata();
-            const links = meta[META_KEY] || [];
-            if (role === "GM") {
-                links.forEach((l, i) => {
-                    if (i < 10) {
-                        const nEl = document.getElementById(`n-${i}`);
-                        const uEl = document.getElementById(`u-${i}`);
-                        if(nEl) nEl.value = l.name || '';
-                        if(uEl) uEl.value = l.url || '';
-                    }
-                });
-            }
-            renderButtons(links);
-        };
-
-        document.getElementById('toggleSettings').onclick = () => {
-            const panel = document.getElementById('gmPanel');
-            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-        };
-
-        setupInputs();
-        await loadData();
-        OBR.room.onMetadataChange((meta) => { 
-            if (meta[META_KEY]) renderButtons(meta[META_KEY]); 
-        });
-    });
-</script>
-</body>
-</html>
+                const url = document
