@@ -8,16 +8,19 @@
         :root {
             --primary: #2196F3;
             --bg: transparent; 
-            --panel: rgba(20, 20, 20, 0.9);
+            --panel: rgba(20, 20, 20, 0.95);
             --border: rgba(255, 255, 255, 0.15);
             --active-green: #2e7d32;
         }
         body { 
             background: transparent; color: #eee; 
             font-family: 'Segoe UI', Roboto, sans-serif; 
-            padding: 4px; margin: 0; overflow: hidden; 
+            padding: 4px; margin: 0; overflow: hidden; height: 100vh;
         }
-        .container { display: flex; flex-direction: column; }
+        .container { display: flex; flex-direction: column; height: 100%; }
+        
+        /* Dashboard View */
+        #dashboardView { display: flex; flex-direction: column; }
         .link-grid {
             display: grid; grid-template-columns: repeat(5, 1fr);
             gap: 6px; margin-bottom: 4px;
@@ -32,54 +35,59 @@
         .action-btn.active { background: var(--active-green); border-color: #4caf50; }
         .action-btn:not(.active) { opacity: 0.3; cursor: default; border-style: dashed; }
         
-        .editor-toggle { display: flex; justify-content: flex-end; }
+        /* Browser View */
+        #browserView { display: none; flex-direction: column; height: 100%; background: #111; position: absolute; top:0; left:0; right:0; bottom:0; z-index: 100; }
+        .browser-bar { background: #222; padding: 5px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid var(--border); }
+        #linkFrame { flex-grow: 1; border: none; background: white; width: 100%; }
+
+        /* Settings */
         .icon-btn { background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; padding: 4px; }
         .icon-btn:hover { color: white; }
-
         #gmPanel {
             display: none; background: var(--panel); border-radius: 8px;
             margin-top: 8px; padding: 12px; border: 1px solid var(--border);
-            overflow-y: auto; max-height: 380px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            overflow-y: auto; max-height: 400px;
         }
-        .row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
-        .global-row { 
-            background: rgba(33, 150, 243, 0.1); padding: 8px; 
-            border-radius: 6px; margin-bottom: 12px; border: 1px solid rgba(33, 150, 243, 0.3);
-        }
-        input {
+        .row { display: flex; gap: 4px; margin-bottom: 6px; align-items: center; }
+        input, select {
             background: rgba(0,0,0,0.5); border: 1px solid var(--border);
-            color: white; padding: 6px; font-size: 11px; border-radius: 4px; outline: none;
+            color: white; padding: 4px; font-size: 11px; border-radius: 4px;
         }
-        input:focus { border-color: var(--primary); }
-        .label-in { width: 80px; }
+        .label-in { width: 70px; }
         .url-in { flex-grow: 1; }
-        .dim-in { width: 45px; text-align: center; color: var(--primary); font-weight: bold; }
-        .section-label { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; font-weight: bold;}
+        .dim-in { width: 40px; text-align: center; }
+        .mode-sel { width: 55px; font-size: 9px; background: #333; }
+        .section-label { font-size: 10px; color: #888; text-transform: uppercase; margin: 10px 0 5px 0; font-weight: bold;}
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="buttonContainer" class="link-grid"></div>
-
-    <div id="gmOnly" style="display:none;">
-        <div class="editor-toggle">
-            <button class="icon-btn" id="toggleSettings" title="Configure Dashboard">
+    <div id="dashboardView">
+        <div id="buttonContainer" class="link-grid"></div>
+        <div id="gmOnly" style="display:none; text-align: right;">
+            <button class="icon-btn" id="toggleSettings">
                 <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.17.31a1.464 1.464 0 0 1-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.31-.17a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.17-.31a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.31.17a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg>
             </button>
         </div>
-
         <div id="gmPanel">
-            <div class="section-label">Global Default Window Size</div>
-            <div class="row global-row">
-                <span style="font-size: 11px; flex-grow: 1;">Applied if link size is blank:</span>
-                <input type="number" class="dim-in" id="g-w" placeholder="800" title="Global Width">
-                <input type="number" class="dim-in" id="g-h" placeholder="600" title="Global Height">
+            <div class="section-label">Global Defaults</div>
+            <div class="row">
+                <input type="number" class="dim-in" id="g-w" placeholder="800">
+                <input type="number" class="dim-in" id="g-h" placeholder="600">
+                <span style="font-size: 10px;">Fallback Size</span>
             </div>
-
-            <div class="section-label">Links (Label | URL | Custom W | Custom H)</div>
+            <div class="section-label">Links (Label | URL | W | H | Mode)</div>
             <div id="inputList"></div>
         </div>
+    </div>
+
+    <div id="browserView">
+        <div class="browser-bar">
+            <button class="action-btn active" id="closeBrowser" style="padding: 4px 12px;">← Back to Dashboard</button>
+            <span id="browserTitle" style="font-size: 11px; color: #aaa;"></span>
+        </div>
+        <iframe id="linkFrame" sandbox="allow-forms allow-scripts allow-same-origin"></iframe>
     </div>
 </div>
 
@@ -94,15 +102,6 @@
         const role = await OBR.player.getRole();
         if (role === "GM") document.getElementById('gmOnly').style.display = 'block';
 
-        const updatePlaceholders = () => {
-            const gw = document.getElementById('g-w').value || 800;
-            const gh = document.getElementById('g-h').value || 600;
-            for(let i=0; i<10; i++) {
-                document.getElementById(`w-${i}`).placeholder = gw;
-                document.getElementById(`h-${i}`).placeholder = gh;
-            }
-        };
-
         const setupInputs = () => {
             const list = document.getElementById('inputList');
             for (let i = 0; i < 10; i++) {
@@ -110,36 +109,58 @@
                 row.className = 'row';
                 row.innerHTML = `
                     <input type="text" class="label-in" id="n-${i}" placeholder="Link ${i+1}">
-                    <input type="text" class="url-in" id="u-${i}" placeholder="Paste URL here...">
-                    <input type="number" class="dim-in" id="w-${i}">
-                    <input type="number" class="dim-in" id="h-${i}">
+                    <input type="text" class="url-in" id="u-${i}" placeholder="URL">
+                    <input type="number" class="dim-in" id="w-${i}" placeholder="W">
+                    <input type="number" class="dim-in" id="h-${i}" placeholder="H">
+                    <select class="mode-sel" id="m-${i}">
+                        <option value="pop">Pop-out</option>
+                        <option value="in">In-Window</option>
+                    </select>
                 `;
-                row.querySelectorAll('input').forEach(el => el.oninput = () => { saveData(); updatePlaceholders(); });
+                row.querySelectorAll('input, select').forEach(el => el.onchange = () => saveData());
                 list.appendChild(row);
             }
-            document.getElementById('g-w').oninput = () => { saveData(); updatePlaceholders(); };
-            document.getElementById('g-h').oninput = () => { saveData(); updatePlaceholders(); };
+            document.getElementById('g-w').onchange = () => saveData();
+            document.getElementById('g-h').onchange = () => saveData();
+        };
+
+        const openInWindow = async (url, title) => {
+            const browser = document.getElementById('browserView');
+            const frame = document.getElementById('linkFrame');
+            document.getElementById('browserTitle').innerText = title;
+            frame.src = url;
+            browser.style.display = 'flex';
+            await OBR.action.setHeight(600); // Expand to show content
+        };
+
+        document.getElementById('closeBrowser').onclick = async () => {
+            document.getElementById('browserView').style.display = 'none';
+            document.getElementById('linkFrame').src = '';
+            await OBR.action.setHeight(110);
         };
 
         const renderButtons = (links, config = {}) => {
             const container = document.getElementById('buttonContainer');
             container.innerHTML = '';
-            for (let i = 0; i < 10; i++) {
-                const link = links[i] || {};
+            links.forEach((link, i) => {
                 const btn = document.createElement('button');
                 btn.className = 'action-btn';
                 if (link.url?.trim()) {
                     btn.classList.add('active');
-                    btn.innerText = link.name || `Link ${i + 1}`;
+                    btn.innerText = link.name || `Link ${i+1}`;
                     btn.onclick = () => {
                         const url = link.url.startsWith('http') ? link.url : `https://${link.url}`;
-                        const w = link.w || config.w || 800;
-                        const h = link.h || config.h || 600;
-                        window.open(url, '_blank', `width=${w},height=${h},location=no`);
+                        if (link.mode === 'in') {
+                            openInWindow(url, link.name || url);
+                        } else {
+                            const w = link.w || config.w || 800;
+                            const h = link.h || config.h || 600;
+                            window.open(url, '_blank', `width=${w},height=${h}`);
+                        }
                     };
                 } else { btn.innerText = "—"; }
                 container.appendChild(btn);
-            }
+            });
         };
 
         const saveData = async () => {
@@ -149,13 +170,11 @@
                     name: document.getElementById(`n-${i}`).value,
                     url: document.getElementById(`u-${i}`).value,
                     w: document.getElementById(`w-${i}`).value,
-                    h: document.getElementById(`h-${i}`).value
+                    h: document.getElementById(`h-${i}`).value,
+                    mode: document.getElementById(`m-${i}`).value
                 });
             }
-            const config = {
-                w: document.getElementById('g-w').value,
-                h: document.getElementById('g-h').value
-            };
+            const config = { w: document.getElementById('g-w').value, h: document.getElementById('g-h').value };
             await OBR.room.setMetadata({ [META_KEY]: links, [GLOBAL_KEY]: config });
         };
 
@@ -163,19 +182,18 @@
             const meta = await OBR.room.getMetadata();
             const links = meta[META_KEY] || [];
             const config = meta[GLOBAL_KEY] || { w: 800, h: 600 };
-            
             if (role === "GM") {
                 document.getElementById('g-w').value = config.w || '';
                 document.getElementById('g-h').value = config.h || '';
                 links.forEach((l, i) => {
-                    if (i < 10) {
+                    if (document.getElementById(`n-${i}`)) {
                         document.getElementById(`n-${i}`).value = l.name || '';
                         document.getElementById(`u-${i}`).value = l.url || '';
                         document.getElementById(`w-${i}`).value = l.w || '';
                         document.getElementById(`h-${i}`).value = l.h || '';
+                        document.getElementById(`m-${i}`).value = l.mode || 'pop';
                     }
                 });
-                updatePlaceholders();
             }
             renderButtons(links, config);
         };
@@ -184,14 +202,12 @@
             const panel = document.getElementById('gmPanel');
             const isVisible = panel.style.display === 'block';
             panel.style.display = isVisible ? 'none' : 'block';
-            await OBR.action.setHeight(isVisible ? 110 : 520);
+            await OBR.action.setHeight(isVisible ? 110 : 500);
         };
 
         setupInputs();
         await loadData();
-        OBR.room.onMetadataChange((meta) => {
-            renderButtons(meta[META_KEY] || [], meta[GLOBAL_KEY] || {});
-        });
+        OBR.room.onMetadataChange(meta => renderButtons(meta[META_KEY] || [], meta[GLOBAL_KEY] || {}));
     });
 </script>
 </body>
