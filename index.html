@@ -7,54 +7,51 @@
     <style>
         :root {
             --primary: #2196F3;
-            --bg: rgba(30, 31, 34, 0.95);
-            --panel: rgba(255, 255, 255, 0.05);
-            --border: rgba(255, 255, 255, 0.1);
+            /* We remove the solid background and use transparent instead */
+            --bg: transparent; 
+            --panel: rgba(255, 255, 255, 0.1);
+            --border: rgba(255, 255, 255, 0.2);
         }
         body { 
             background: transparent; 
             color: #eee; 
             font-family: 'Segoe UI', Roboto, sans-serif; 
-            padding: 8px; 
+            padding: 4px; 
             margin: 0;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
+            overflow: hidden; /* Prevents double scrollbars */
         }
         .container {
             background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 10px;
-            backdrop-filter: blur(10px);
+            /* Removed the heavy border and background to let OBR glass show */
             display: flex;
             flex-direction: column;
-            max-height: 100%;
+            max-height: 100vh;
         }
-        /* Dashboard Grid - Set to 5 columns per row */
+        
         .link-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 6px;
             margin-bottom: 4px;
         }
+
         .action-btn {
             background: var(--panel);
             border: 1px solid var(--border);
             color: white;
-            padding: 10px 2px;
-            border-radius: 4px;
-            font-size: 9px;
+            padding: 8px 2px;
+            border-radius: 6px;
+            font-size: 10px;
             font-weight: 600;
             text-transform: uppercase;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: background 0.2s;
             text-align: center;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
+
         .action-btn:hover {
             background: var(--primary);
             border-color: #64b5f6;
@@ -65,32 +62,35 @@
             justify-content: flex-end;
             margin-top: 2px;
         }
+
         .icon-btn {
             background: none;
             border: none;
-            color: #666;
+            color: rgba(255,255,255,0.4);
             cursor: pointer;
             padding: 4px;
         }
         .icon-btn:hover { color: white; }
 
-        /* Scrollable Settings Panel */
         #gmPanel {
             display: none;
-            border-top: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.3); /* Slight darkening for the settings area */
+            border-radius: 8px;
             margin-top: 8px;
-            padding-top: 8px;
+            padding: 10px;
             overflow-y: auto;
-            max-height: 200px; /* Limits height so buttons stay visible */
+            max-height: 250px;
+            border: 1px solid var(--border);
         }
+
         .row {
             display: flex;
             gap: 4px;
             margin-bottom: 5px;
-            padding-right: 4px;
         }
+
         input {
-            background: rgba(0,0,0,0.2);
+            background: rgba(0,0,0,0.4);
             border: 1px solid var(--border);
             color: white;
             padding: 5px;
@@ -99,20 +99,18 @@
             outline: none;
         }
         input:focus { border-color: var(--primary); }
-        .label-in { width: 80px; }
+        .label-in { width: 70px; }
         .url-in { flex-grow: 1; }
-        .section-label { font-size: 9px; color: #888; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px;}
+        .section-label { font-size: 9px; color: #aaa; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px;}
         
-        /* Custom Scrollbar */
         #gmPanel::-webkit-scrollbar { width: 4px; }
-        #gmPanel::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
+        #gmPanel::-webkit-scrollbar-thumb { background: #666; border-radius: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="buttonContainer" class="link-grid">
-        </div>
+    <div id="buttonContainer" class="link-grid"></div>
 
     <div id="gmOnly" style="display:none;">
         <div class="editor-toggle">
@@ -144,7 +142,7 @@
                 const row = document.createElement('div');
                 row.className = 'row';
                 row.innerHTML = `
-                    <input type="text" class="label-in" id="n-${i}" placeholder="Label ${i+1}">
+                    <input type="text" class="label-in" id="n-${i}" placeholder="Label">
                     <input type="text" class="url-in" id="u-${i}" placeholder="URL">
                 `;
                 row.querySelectorAll('input').forEach(el => el.oninput = () => saveData());
@@ -155,7 +153,6 @@
         const renderButtons = (links) => {
             const container = document.getElementById('buttonContainer');
             container.innerHTML = '';
-            // Only render buttons that have a URL
             links.forEach(link => {
                 if (link.url && link.url.trim() !== "") {
                     const btn = document.createElement('button');
@@ -169,9 +166,8 @@
                     container.appendChild(btn);
                 }
             });
-            // Placeholder if completely empty
             if (container.children.length === 0) {
-                container.innerHTML = '<div style="grid-column: 1/-1; font-size:10px; color:#555; text-align:center; padding:10px;">Click gear to add links</div>';
+                container.innerHTML = '<div style="grid-column: 1/-1; font-size:10px; color:#888; text-align:center; padding:10px; border: 1px dashed rgba(255,255,255,0.1); border-radius:4px;">Add links via the gear icon</div>';
             }
         };
 
@@ -191,8 +187,10 @@
             if (role === "GM") {
                 links.forEach((l, i) => {
                     if (i < 10) {
-                        document.getElementById(`n-${i}`).value = l.name || '';
-                        document.getElementById(`u-${i}`).value = l.url || '';
+                        const nEl = document.getElementById(`n-${i}`);
+                        const uEl = document.getElementById(`u-${i}`);
+                        if(nEl) nEl.value = l.name || '';
+                        if(uEl) uEl.value = l.url || '';
                     }
                 });
             }
@@ -206,7 +204,9 @@
 
         setupInputs();
         await loadData();
-        OBR.room.onMetadataChange((meta) => { if (meta[META_KEY]) renderButtons(meta[META_KEY]); });
+        OBR.room.onMetadataChange((meta) => { 
+            if (meta[META_KEY]) renderButtons(meta[META_KEY]); 
+        });
     });
 </script>
 </body>
