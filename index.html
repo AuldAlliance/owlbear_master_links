@@ -3,116 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GM Dashboard 10-Link</title>
+    <title>GM Dashboard Pro</title>
     <style>
         :root {
             --primary: #2196F3;
             --bg: transparent; 
-            --panel: rgba(255, 255, 255, 0.1);
-            --border: rgba(255, 255, 255, 0.2);
+            --panel: rgba(20, 20, 20, 0.9);
+            --border: rgba(255, 255, 255, 0.15);
             --active-green: #2e7d32;
         }
         body { 
-            background: transparent; 
-            color: #eee; 
+            background: transparent; color: #eee; 
             font-family: 'Segoe UI', Roboto, sans-serif; 
-            padding: 4px; 
-            margin: 0;
-            overflow: hidden; 
+            padding: 4px; margin: 0; overflow: hidden; 
         }
-        .container {
-            background: var(--bg);
-            display: flex;
-            flex-direction: column;
-        }
-        
+        .container { display: flex; flex-direction: column; }
         .link-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            grid-template-rows: repeat(2, auto);
-            gap: 6px;
-            margin-bottom: 4px;
+            display: grid; grid-template-columns: repeat(5, 1fr);
+            gap: 6px; margin-bottom: 4px;
         }
-
         .action-btn {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            color: white;
-            padding: 8px 2px;
-            border-radius: 6px;
-            font-size: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-align: center;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            background: rgba(255,255,255,0.1); border: 1px solid var(--border);
+            color: white; padding: 8px 2px; border-radius: 6px;
+            font-size: 10px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; text-align: center;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
-
-        /* Highlighting for populated buttons */
-        .action-btn.active {
-            background: var(--active-green);
-            border-color: #4caf50;
-            opacity: 1;
-        }
-        .action-btn.active:hover {
-            background: #388e3c;
-            transform: translateY(-1px);
-        }
-
-        /* Styling for empty buttons */
-        .action-btn:not(.active) {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px dashed rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.2);
-            cursor: default;
-        }
-
-        .editor-toggle {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 2px;
-        }
-
-        .icon-btn {
-            background: none;
-            border: none;
-            color: rgba(255,255,255,0.4);
-            cursor: pointer;
-            padding: 4px;
-        }
+        .action-btn.active { background: var(--active-green); border-color: #4caf50; }
+        .action-btn:not(.active) { opacity: 0.3; cursor: default; border-style: dashed; }
+        
+        .editor-toggle { display: flex; justify-content: flex-end; }
+        .icon-btn { background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; padding: 4px; }
         .icon-btn:hover { color: white; }
 
         #gmPanel {
-            display: none;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            margin-top: 8px;
-            padding: 10px;
-            border: 1px solid var(--border);
+            display: none; background: var(--panel); border-radius: 8px;
+            margin-top: 8px; padding: 12px; border: 1px solid var(--border);
+            overflow-y: auto; max-height: 380px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
-
-        .row {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 5px;
+        .row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
+        .global-row { 
+            background: rgba(33, 150, 243, 0.1); padding: 8px; 
+            border-radius: 6px; margin-bottom: 12px; border: 1px solid rgba(33, 150, 243, 0.3);
         }
-
         input {
-            background: rgba(0,0,0,0.4);
-            border: 1px solid var(--border);
-            color: white;
-            padding: 5px;
-            font-size: 11px;
-            border-radius: 4px;
-            outline: none;
+            background: rgba(0,0,0,0.5); border: 1px solid var(--border);
+            color: white; padding: 6px; font-size: 11px; border-radius: 4px; outline: none;
         }
         input:focus { border-color: var(--primary); }
-        .label-in { width: 70px; }
+        .label-in { width: 80px; }
         .url-in { flex-grow: 1; }
-        .section-label { font-size: 9px; color: #aaa; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px;}
+        .dim-in { width: 45px; text-align: center; color: var(--primary); font-weight: bold; }
+        .section-label { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px; font-weight: bold;}
     </style>
 </head>
 <body>
@@ -122,13 +64,20 @@
 
     <div id="gmOnly" style="display:none;">
         <div class="editor-toggle">
-            <button class="icon-btn" id="toggleSettings" title="Configure 10 Links">
-                <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.17.31a1.464 1.464 0 0 1-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.31-.17a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.17-.31a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.31.17a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg>
+            <button class="icon-btn" id="toggleSettings" title="Configure Dashboard">
+                <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.17.31a1.464 1.464 0 0 1-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.31-.17a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.17-.31a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.31.17a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg>
             </button>
         </div>
 
         <div id="gmPanel">
-            <div class="section-label">Link Settings (1-10)</div>
+            <div class="section-label">Global Default Window Size</div>
+            <div class="row global-row">
+                <span style="font-size: 11px; flex-grow: 1;">Applied if link size is blank:</span>
+                <input type="number" class="dim-in" id="g-w" placeholder="800" title="Global Width">
+                <input type="number" class="dim-in" id="g-h" placeholder="600" title="Global Height">
+            </div>
+
+            <div class="section-label">Links (Label | URL | Custom W | Custom H)</div>
             <div id="inputList"></div>
         </div>
     </div>
@@ -139,16 +88,20 @@
 
     const ID = "com.auldalliance.gm-links";
     const META_KEY = `${ID}/links`;
+    const GLOBAL_KEY = `${ID}/config`;
 
     OBR.onReady(async () => {
         const role = await OBR.player.getRole();
-        
-        if (role === "GM") {
-            document.getElementById('gmOnly').style.display = 'block';
-            await OBR.action.setHeight(110); // Slightly taller for two rows
-        } else {
-            await OBR.action.setHeight(80);
-        }
+        if (role === "GM") document.getElementById('gmOnly').style.display = 'block';
+
+        const updatePlaceholders = () => {
+            const gw = document.getElementById('g-w').value || 800;
+            const gh = document.getElementById('g-h').value || 600;
+            for(let i=0; i<10; i++) {
+                document.getElementById(`w-${i}`).placeholder = gw;
+                document.getElementById(`h-${i}`).placeholder = gh;
+            }
+        };
 
         const setupInputs = () => {
             const list = document.getElementById('inputList');
@@ -156,34 +109,35 @@
                 const row = document.createElement('div');
                 row.className = 'row';
                 row.innerHTML = `
-                    <input type="text" class="label-in" id="n-${i}" placeholder="Label">
-                    <input type="text" class="url-in" id="u-${i}" placeholder="URL">
+                    <input type="text" class="label-in" id="n-${i}" placeholder="Link ${i+1}">
+                    <input type="text" class="url-in" id="u-${i}" placeholder="Paste URL here...">
+                    <input type="number" class="dim-in" id="w-${i}">
+                    <input type="number" class="dim-in" id="h-${i}">
                 `;
-                row.querySelectorAll('input').forEach(el => el.oninput = () => saveData());
+                row.querySelectorAll('input').forEach(el => el.oninput = () => { saveData(); updatePlaceholders(); });
                 list.appendChild(row);
             }
+            document.getElementById('g-w').oninput = () => { saveData(); updatePlaceholders(); };
+            document.getElementById('g-h').oninput = () => { saveData(); updatePlaceholders(); };
         };
 
-        const renderButtons = (links) => {
+        const renderButtons = (links, config = {}) => {
             const container = document.getElementById('buttonContainer');
             container.innerHTML = '';
-            
             for (let i = 0; i < 10; i++) {
                 const link = links[i] || {};
                 const btn = document.createElement('button');
                 btn.className = 'action-btn';
-                
-                if (link.url && link.url.trim() !== "") {
+                if (link.url?.trim()) {
                     btn.classList.add('active');
                     btn.innerText = link.name || `Link ${i + 1}`;
-                    btn.title = link.url;
                     btn.onclick = () => {
                         const url = link.url.startsWith('http') ? link.url : `https://${link.url}`;
-                        window.open(url, '_blank', 'width=800,height=600');
+                        const w = link.w || config.w || 800;
+                        const h = link.h || config.h || 600;
+                        window.open(url, '_blank', `width=${w},height=${h},location=no`);
                     };
-                } else {
-                    btn.innerText = "—"; // Minimal indicator for empty
-                }
+                } else { btn.innerText = "—"; }
                 container.appendChild(btn);
             }
         };
@@ -191,44 +145,52 @@
         const saveData = async () => {
             const links = [];
             for (let i = 0; i < 10; i++) {
-                const name = document.getElementById(`n-${i}`).value;
-                const url = document.getElementById(`u-${i}`).value;
-                links.push({ name, url }); // Push empty ones too to preserve order
+                links.push({
+                    name: document.getElementById(`n-${i}`).value,
+                    url: document.getElementById(`u-${i}`).value,
+                    w: document.getElementById(`w-${i}`).value,
+                    h: document.getElementById(`h-${i}`).value
+                });
             }
-            await OBR.room.setMetadata({ [META_KEY]: links });
+            const config = {
+                w: document.getElementById('g-w').value,
+                h: document.getElementById('g-h').value
+            };
+            await OBR.room.setMetadata({ [META_KEY]: links, [GLOBAL_KEY]: config });
         };
 
         const loadData = async () => {
             const meta = await OBR.room.getMetadata();
             const links = meta[META_KEY] || [];
+            const config = meta[GLOBAL_KEY] || { w: 800, h: 600 };
+            
             if (role === "GM") {
+                document.getElementById('g-w').value = config.w || '';
+                document.getElementById('g-h').value = config.h || '';
                 links.forEach((l, i) => {
                     if (i < 10) {
-                        const nEl = document.getElementById(`n-${i}`);
-                        const uEl = document.getElementById(`u-${i}`);
-                        if(nEl) nEl.value = l.name || '';
-                        if(uEl) uEl.value = l.url || '';
+                        document.getElementById(`n-${i}`).value = l.name || '';
+                        document.getElementById(`u-${i}`).value = l.url || '';
+                        document.getElementById(`w-${i}`).value = l.w || '';
+                        document.getElementById(`h-${i}`).value = l.h || '';
                     }
                 });
+                updatePlaceholders();
             }
-            renderButtons(links);
+            renderButtons(links, config);
         };
 
         document.getElementById('toggleSettings').onclick = async () => {
             const panel = document.getElementById('gmPanel');
-            if (panel.style.display === 'block') {
-                panel.style.display = 'none';
-                await OBR.action.setHeight(110); 
-            } else {
-                panel.style.display = 'block';
-                await OBR.action.setHeight(480); 
-            }
+            const isVisible = panel.style.display === 'block';
+            panel.style.display = isVisible ? 'none' : 'block';
+            await OBR.action.setHeight(isVisible ? 110 : 520);
         };
 
         setupInputs();
         await loadData();
-        OBR.room.onMetadataChange((meta) => { 
-            if (meta[META_KEY]) renderButtons(meta[META_KEY]); 
+        OBR.room.onMetadataChange((meta) => {
+            renderButtons(meta[META_KEY] || [], meta[GLOBAL_KEY] || {});
         });
     });
 </script>
