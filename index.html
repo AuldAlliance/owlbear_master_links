@@ -7,7 +7,6 @@
     <style>
         :root {
             --primary: #2196F3;
-            /* We remove the solid background and use transparent instead */
             --bg: transparent; 
             --panel: rgba(255, 255, 255, 0.1);
             --border: rgba(255, 255, 255, 0.2);
@@ -18,14 +17,12 @@
             font-family: 'Segoe UI', Roboto, sans-serif; 
             padding: 4px; 
             margin: 0;
-            overflow: hidden; /* Prevents double scrollbars */
+            overflow: hidden; 
         }
         .container {
             background: var(--bg);
-            /* Removed the heavy border and background to let OBR glass show */
             display: flex;
             flex-direction: column;
-            max-height: 100vh;
         }
         
         .link-grid {
@@ -73,8 +70,8 @@
         .icon-btn:hover { color: white; }
 
         #gmPanel {
-            display: none;
-            background: rgba(0, 0, 0, 0.3); /* Slight darkening for the settings area */
+            display: none; /* Hidden by default */
+            background: rgba(0, 0, 0, 0.3);
             border-radius: 8px;
             margin-top: 8px;
             padding: 10px;
@@ -134,7 +131,14 @@
 
     OBR.onReady(async () => {
         const role = await OBR.player.getRole();
-        if (role === "GM") document.getElementById('gmOnly').style.display = 'block';
+        if (role === "GM") {
+            document.getElementById('gmOnly').style.display = 'block';
+            // Start the window small for the GM
+            await OBR.action.setHeight(85);
+        } else {
+            // Start the window small for Players
+            await OBR.action.setHeight(50);
+        }
 
         const setupInputs = () => {
             const list = document.getElementById('inputList');
@@ -197,9 +201,16 @@
             renderButtons(links);
         };
 
-        document.getElementById('toggleSettings').onclick = () => {
+        // --- UPDATED TOGGLE LOGIC ---
+        document.getElementById('toggleSettings').onclick = async () => {
             const panel = document.getElementById('gmPanel');
-            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+            if (panel.style.display === 'block') {
+                panel.style.display = 'none';
+                await OBR.action.setHeight(85); // Shrink
+            } else {
+                panel.style.display = 'block';
+                await OBR.action.setHeight(400); // Expand
+            }
         };
 
         setupInputs();
