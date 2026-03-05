@@ -17,13 +17,17 @@
             font-family: 'Segoe UI', Roboto, sans-serif; 
             padding: 8px; 
             margin: 0;
-            overflow: hidden; /* Important: prevents double scrollbars during resize */
+            /* Failsafe: Ensure the body is never 0px tall */
+            min-height: 50px; 
+            overflow: hidden;
         }
 
         .container {
             display: flex;
             flex-direction: column;
             width: 100%;
+            /* Helps the resize observer track height accurately */
+            box-sizing: border-box; 
         }
 
         .link-grid {
@@ -52,7 +56,6 @@
         .action-btn:hover {
             background: var(--primary);
             border-color: #64b5f6;
-            transform: translateY(-1px);
         }
 
         .editor-toggle {
@@ -67,17 +70,15 @@
             color: rgba(255, 255, 255, 0.3);
             cursor: pointer;
             padding: 4px;
-            transition: color 0.2s;
         }
         .icon-btn:hover { color: white; }
 
-        /* Settings Panel */
         #gmPanel {
             display: none;
             border-top: 1px solid var(--border);
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.3);
             border-radius: 8px;
-            margin-top: 4px;
+            margin-top: 8px;
             padding: 10px;
             overflow-y: auto;
             max-height: 250px;
@@ -90,29 +91,23 @@
         }
 
         input {
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.4);
             border: 1px solid var(--border);
             color: white;
             padding: 6px;
             font-size: 11px;
             border-radius: 4px;
-            outline: none;
+            width: 100%;
         }
-        input:focus { border-color: var(--primary); }
-        .label-in { width: 80px; }
-        .url-in { flex-grow: 1; }
+        .label-in { flex: 0 0 70px; }
+        .url-in { flex: 1; }
         
         .section-label { 
             font-size: 9px; 
             color: #888; 
             text-transform: uppercase; 
-            margin-bottom: 10px; 
-            letter-spacing: 1px;
+            margin-bottom: 10px;
         }
-
-        /* Scrollbar for Settings */
-        #gmPanel::-webkit-scrollbar { width: 4px; }
-        #gmPanel::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -122,13 +117,12 @@
 
     <div id="gmOnly" style="display:none;">
         <div class="editor-toggle">
-            <button class="icon-btn" id="toggleSettings" title="Configure Links">
+            <button class="icon-btn" id="toggleSettings">
                 <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.17.31a1.464 1.464 0 0 1-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.31-.17a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.17-.31a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.31.17a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 10.93a2.929 2.929 0 1 1 0-5.86 2.929 2.929 0 0 1 0 5.858z"/></svg>
             </button>
         </div>
-
         <div id="gmPanel">
-            <div class="section-label">Link Settings (1-10)</div>
+            <div class="section-label">Link Settings</div>
             <div id="inputList"></div>
         </div>
     </div>
@@ -140,24 +134,23 @@
     const ID = "com.auldalliance.gm-links";
     const META_KEY = `${ID}/links`;
 
-    /**
-     * Resizes the OBR viewport to match the current content height.
-     */
-    const syncHeight = () => {
-        // Use requestAnimationFrame to wait for the next render cycle
-        requestAnimationFrame(() => {
-            const container = document.getElementById('mainContainer');
-            if (container) {
-                const height = container.offsetHeight;
-                // Add a small 16px buffer for padding/stability
-                OBR.viewport.setHeight(height + 16);
-            }
-        });
-    };
+    // --- AUTOMATIC RESIZER ---
+    // This watches the container and tells OBR to resize whenever it changes
+    const resizeObserver = new ResizeObserver((entries) => {
+        for (let entry of entries) {
+            const height = Math.max(entry.contentRect.height + 40, 60);
+            OBR.viewport.setHeight(height);
+        }
+    });
 
     OBR.onReady(async () => {
         const role = await OBR.player.getRole();
-        if (role === "GM") document.getElementById('gmOnly').style.display = 'block';
+        if (role === "GM") {
+            document.getElementById('gmOnly').style.display = 'block';
+        }
+
+        // Start watching the container for height changes
+        resizeObserver.observe(document.getElementById('mainContainer'));
 
         const setupInputs = () => {
             const list = document.getElementById('inputList');
@@ -168,9 +161,7 @@
                     <input type="text" class="label-in" id="n-${i}" placeholder="Label">
                     <input type="text" class="url-in" id="u-${i}" placeholder="URL">
                 `;
-                row.querySelectorAll('input').forEach(el => {
-                    el.oninput = () => saveData();
-                });
+                row.querySelectorAll('input').forEach(el => el.oninput = saveData);
                 list.appendChild(row);
             }
         };
@@ -179,12 +170,13 @@
             const container = document.getElementById('buttonContainer');
             container.innerHTML = '';
             
+            let hasLinks = false;
             links.forEach(link => {
                 if (link.url && link.url.trim() !== "") {
+                    hasLinks = true;
                     const btn = document.createElement('button');
                     btn.className = 'action-btn';
                     btn.innerText = link.name || "LINK";
-                    btn.title = link.url;
                     btn.onclick = () => {
                         const url = link.url.startsWith('http') ? link.url : `https://${link.url}`;
                         window.open(url, '_blank', 'width=800,height=600');
@@ -193,15 +185,48 @@
                 }
             });
 
-            if (container.children.length === 0) {
-                container.innerHTML = '<div style="grid-column: 1/-1; font-size:10px; color:#666; text-align:center; padding:10px; border: 1px dashed var(--border);">Click gear to setup links</div>';
+            if (!hasLinks) {
+                container.innerHTML = '<div style="grid-column: 1/-1; font-size:10px; color:#aaa; text-align:center; padding:10px; border: 1px dashed rgba(255,255,255,0.2);">Open settings to add links</div>';
             }
-            
-            syncHeight();
         };
 
         const saveData = async () => {
             const links = [];
             for (let i = 0; i < 10; i++) {
                 const name = document.getElementById(`n-${i}`).value;
-                const url = document
+                const url = document.getElementById(`u-${i}`).value;
+                if (url) links.push({ name, url });
+            }
+            await OBR.room.setMetadata({ [META_KEY]: links });
+        };
+
+        const loadData = async () => {
+            const meta = await OBR.room.getMetadata();
+            const links = meta[META_KEY] || [];
+            
+            if (role === "GM") {
+                links.forEach((l, i) => {
+                    const n = document.getElementById(`n-${i}`);
+                    const u = document.getElementById(`u-${i}`);
+                    if(n) n.value = l.name || '';
+                    if(u) u.value = l.url || '';
+                });
+            }
+            renderButtons(links);
+        };
+
+        document.getElementById('toggleSettings').onclick = () => {
+            const panel = document.getElementById('gmPanel');
+            panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+        };
+
+        setupInputs();
+        await loadData();
+
+        OBR.room.onMetadataChange((meta) => {
+            if (meta[META_KEY]) renderButtons(meta[META_KEY]);
+        });
+    });
+</script>
+</body>
+</html>
