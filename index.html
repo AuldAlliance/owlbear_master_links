@@ -92,6 +92,7 @@
     
     let currentActiveUrl = "";
     let currentActiveSize = { w: 500, h: 600 };
+    let isSettingsOpen = false; // Track the state of the GM panel
 
     OBR.onReady(async () => {
         const role = await OBR.player.getRole();
@@ -132,15 +133,22 @@
         };
 
         document.getElementById('popOutNow').onclick = () => {
-            window.open(currentActiveUrl, '_blank', `width=${currentActiveSize.w},height=${currentActiveSize.h}`);
+            window.open(currentActiveUrl, '_blank', `width=${currentActiveSize.w},height=${currentActiveSize.h},location=no,status=no`);
         };
 
         document.getElementById('closeBrowser').onclick = async () => {
             document.getElementById('browserView').style.display = 'none';
             document.getElementById('linkFrame').src = '';
-            await OBR.action.setWidth(350); 
-            await OBR.action.setHeight(110);
-            window.focus(); // Force focus back to main extension window
+            
+            // Revert size based on whether settings were open
+            if (isSettingsOpen) {
+                await OBR.action.setWidth(450);
+                await OBR.action.setHeight(500);
+            } else {
+                await OBR.action.setWidth(350); 
+                await OBR.action.setHeight(110);
+            }
+            window.focus(); 
         };
 
         const renderButtons = (links, config = {}) => {
@@ -203,13 +211,13 @@
         };
 
         document.getElementById('toggleSettings').onclick = async (e) => {
-            // Prevent event bubbling that might cause focus loss
             e.preventDefault(); e.stopPropagation();
             const panel = document.getElementById('gmPanel');
-            const isVisible = panel.style.display === 'block';
-            panel.style.display = isVisible ? 'none' : 'block';
-            await OBR.action.setWidth(isVisible ? 350 : 450);
-            await OBR.action.setHeight(isVisible ? 110 : 500);
+            isSettingsOpen = panel.style.display !== 'block'; // Update state before changing display
+            panel.style.display = isSettingsOpen ? 'block' : 'none';
+            
+            await OBR.action.setWidth(isSettingsOpen ? 450 : 350);
+            await OBR.action.setHeight(isSettingsOpen ? 500 : 110);
         };
 
         setupInputs();
