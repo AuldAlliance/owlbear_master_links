@@ -35,10 +35,12 @@
         .action-btn:not(.active) { opacity: 0.3; cursor: default; border-style: dashed; }
         
         #browserView { display: none; flex-direction: column; height: 100%; background: #111; position: absolute; top:0; left:0; right:0; bottom:0; z-index: 100; }
-        .browser-bar { background: #222; padding: 5px; display: flex; gap: 10px; align-items: center; border-bottom: 1px solid var(--border); }
+        .browser-bar { background: #222; padding: 4px 8px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--border); }
         #linkFrame { flex-grow: 1; border: none; background: white; width: 100%; height: 100%; }
 
-        .icon-btn { background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; padding: 4px; }
+        .icon-btn { background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; padding: 4px; font-size: 14px;}
+        .icon-btn:hover { color: white; }
+
         #gmPanel {
             display: none; background: var(--panel); border-radius: 8px;
             margin-top: 8px; padding: 12px; border: 1px solid var(--border);
@@ -58,14 +60,14 @@
     <div id="dashboardView">
         <div id="buttonContainer" class="link-grid"></div>
         <div id="gmOnly" style="display:none; text-align: right;">
-            <button class="icon-btn" id="toggleSettings">⚙️</button>
+            <button class="icon-btn" id="toggleSettings" title="Settings">⚙️</button>
         </div>
         <div id="gmPanel">
             <div style="font-size: 10px; color: #888; margin-bottom: 5px;">GLOBAL DEFAULTS</div>
             <div class="row" style="background: rgba(255,255,255,0.05); padding: 5px; border-radius: 4px;">
                 <input type="number" class="dim-in" id="g-w" placeholder="500">
                 <input type="number" class="dim-in" id="g-h" placeholder="600">
-                <span style="font-size: 10px;">Width / Height</span>
+                <span style="font-size: 10px;">Global W / H</span>
             </div>
             <div id="inputList" style="margin-top: 10px;"></div>
         </div>
@@ -73,8 +75,9 @@
 
     <div id="browserView">
         <div class="browser-bar">
-            <button class="action-btn active" id="closeBrowser" style="padding: 4px 12px; font-size: 9px;">← BACK</button>
-            <span id="browserTitle" style="font-size: 10px; color: #aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
+            <button class="action-btn active" id="closeBrowser" style="padding: 4px 10px; font-size: 9px;">← BACK</button>
+            <span id="browserTitle" style="font-size: 10px; color: #aaa; flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
+            <button class="icon-btn" id="popOutNow" title="Open in New Window">↗️</button>
         </div>
         <iframe id="linkFrame" sandbox="allow-forms allow-scripts allow-same-origin"></iframe>
     </div>
@@ -86,6 +89,9 @@
     const ID = "com.auldalliance.gm-links";
     const META_KEY = `${ID}/links`;
     const GLOBAL_KEY = `${ID}/config`;
+    
+    let currentActiveUrl = "";
+    let currentActiveSize = { w: 500, h: 600 };
 
     OBR.onReady(async () => {
         const role = await OBR.player.getRole();
@@ -114,23 +120,27 @@
         };
 
         const openInWindow = async (url, title, w, h) => {
+            currentActiveUrl = url;
+            currentActiveSize = { w, h };
             const browser = document.getElementById('browserView');
             const frame = document.getElementById('linkFrame');
             document.getElementById('browserTitle').innerText = title;
             frame.src = url;
             browser.style.display = 'flex';
-            
-            // Apply custom size to the extension window itself
             await OBR.action.setWidth(parseInt(w));
             await OBR.action.setHeight(parseInt(h));
+        };
+
+        document.getElementById('popOutNow').onclick = () => {
+            window.open(currentActiveUrl, '_blank', `width=${currentActiveSize.w},height=${currentActiveSize.h}`);
         };
 
         document.getElementById('closeBrowser').onclick = async () => {
             document.getElementById('browserView').style.display = 'none';
             document.getElementById('linkFrame').src = '';
-            // Return to dashboard size
             await OBR.action.setWidth(350); 
             await OBR.action.setHeight(110);
+            window.focus(); // Force focus back to main extension window
         };
 
         const renderButtons = (links, config = {}) => {
@@ -192,7 +202,9 @@
             renderButtons(links, config);
         };
 
-        document.getElementById('toggleSettings').onclick = async () => {
+        document.getElementById('toggleSettings').onclick = async (e) => {
+            // Prevent event bubbling that might cause focus loss
+            e.preventDefault(); e.stopPropagation();
             const panel = document.getElementById('gmPanel');
             const isVisible = panel.style.display === 'block';
             panel.style.display = isVisible ? 'none' : 'block';
