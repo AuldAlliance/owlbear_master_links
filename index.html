@@ -92,7 +92,7 @@
     
     let currentActiveUrl = "";
     let currentActiveSize = { w: 500, h: 600 };
-    let isSettingsOpen = false; // Track the state of the GM panel
+    let isSettingsOpen = false; 
 
     OBR.onReady(async () => {
         const role = await OBR.player.getRole();
@@ -132,15 +132,25 @@
             await OBR.action.setHeight(parseInt(h));
         };
 
+        const resetUI = async () => {
+            document.getElementById('browserView').style.display = 'none';
+            document.getElementById('linkFrame').src = '';
+            document.getElementById('gmPanel').style.display = 'none';
+            isSettingsOpen = false;
+            await OBR.action.setWidth(350); 
+            await OBR.action.setHeight(110);
+            window.focus();
+        };
+
         document.getElementById('popOutNow').onclick = () => {
             window.open(currentActiveUrl, '_blank', `width=${currentActiveSize.w},height=${currentActiveSize.h},location=no,status=no`);
+            resetUI(); // Close browser and settings immediately
         };
 
         document.getElementById('closeBrowser').onclick = async () => {
             document.getElementById('browserView').style.display = 'none';
             document.getElementById('linkFrame').src = '';
             
-            // Revert size based on whether settings were open
             if (isSettingsOpen) {
                 await OBR.action.setWidth(450);
                 await OBR.action.setHeight(500);
@@ -213,9 +223,8 @@
         document.getElementById('toggleSettings').onclick = async (e) => {
             e.preventDefault(); e.stopPropagation();
             const panel = document.getElementById('gmPanel');
-            isSettingsOpen = panel.style.display !== 'block'; // Update state before changing display
+            isSettingsOpen = panel.style.display !== 'block';
             panel.style.display = isSettingsOpen ? 'block' : 'none';
-            
             await OBR.action.setWidth(isSettingsOpen ? 450 : 350);
             await OBR.action.setHeight(isSettingsOpen ? 500 : 110);
         };
