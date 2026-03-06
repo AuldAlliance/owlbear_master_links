@@ -97,6 +97,10 @@
     OBR.onReady(async () => {
         const role = await OBR.player.getRole();
         if (role === "GM") document.getElementById('gmOnly').style.display = 'block';
+        
+        // Consistent initial width
+        await OBR.action.setWidth(450);
+        await OBR.action.setHeight(110);
 
         const setupInputs = () => {
             const list = document.getElementById('inputList');
@@ -137,25 +141,25 @@
             document.getElementById('linkFrame').src = '';
             document.getElementById('gmPanel').style.display = 'none';
             isSettingsOpen = false;
-            await OBR.action.setWidth(350); 
+            await OBR.action.setWidth(450); // Maintain consistent width
             await OBR.action.setHeight(110);
             window.focus();
         };
 
         document.getElementById('popOutNow').onclick = () => {
             window.open(currentActiveUrl, '_blank', `width=${currentActiveSize.w},height=${currentActiveSize.h},location=no,status=no`);
-            resetUI(); // Close browser and settings immediately
+            resetUI(); 
         };
 
         document.getElementById('closeBrowser').onclick = async () => {
             document.getElementById('browserView').style.display = 'none';
             document.getElementById('linkFrame').src = '';
             
+            // Revert size based on whether settings were open, but width stays 450
+            await OBR.action.setWidth(450);
             if (isSettingsOpen) {
-                await OBR.action.setWidth(450);
                 await OBR.action.setHeight(500);
             } else {
-                await OBR.action.setWidth(350); 
                 await OBR.action.setHeight(110);
             }
             window.focus(); 
@@ -225,7 +229,8 @@
             const panel = document.getElementById('gmPanel');
             isSettingsOpen = panel.style.display !== 'block';
             panel.style.display = isSettingsOpen ? 'block' : 'none';
-            await OBR.action.setWidth(isSettingsOpen ? 450 : 350);
+            
+            // Width remains 450 regardless of setting state
             await OBR.action.setHeight(isSettingsOpen ? 500 : 110);
         };
 
