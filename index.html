@@ -16,10 +16,15 @@
             background: transparent; color: #eee; 
             font-family: 'Segoe UI', Roboto, sans-serif; 
             padding: 4px; margin: 0; overflow: hidden; height: 100vh;
+            display: flex; flex-direction: column;
         }
-        .container { display: flex; flex-direction: column; height: 100%; }
+        .container { display: flex; flex-direction: column; height: 100%; position: relative; }
         
-        #dashboardView { display: flex; flex-direction: column; }
+        #dashboardView { 
+            display: flex; flex-direction: column; 
+            overflow-y: auto; overflow-x: hidden;
+            width: 100%;
+        }
         .link-grid {
             display: grid; grid-template-columns: repeat(5, 1fr);
             gap: 6px; margin-bottom: 4px;
@@ -34,7 +39,10 @@
         .action-btn.active { background: var(--active-green); border-color: #4caf50; }
         .action-btn:not(.active) { opacity: 0.3; cursor: default; border-style: dashed; }
         
-        #browserView { display: none; flex-direction: column; height: 100%; background: #111; position: absolute; top:0; left:0; right:0; bottom:0; z-index: 100; }
+        #browserView { 
+            display: none; flex-direction: column; height: 100%; 
+            background: #111; position: absolute; top:0; left:0; right:0; bottom:0; z-index: 100; 
+        }
         .browser-bar { background: #222; padding: 4px 8px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--border); }
         #linkFrame { flex-grow: 1; border: none; background: white; width: 100%; height: 100%; }
 
@@ -44,7 +52,7 @@
         #gmPanel {
             display: none; background: var(--panel); border-radius: 8px;
             margin-top: 8px; padding: 12px; border: 1px solid var(--border);
-            overflow-y: auto; max-height: 400px;
+            margin-bottom: 20px;
         }
         .row { display: flex; gap: 4px; margin-bottom: 6px; align-items: center; }
         input, select { background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: white; padding: 4px; font-size: 11px; border-radius: 4px; }
@@ -98,7 +106,7 @@
         const role = await OBR.player.getRole();
         if (role === "GM") document.getElementById('gmOnly').style.display = 'block';
         
-        // Consistent initial width
+        // Initial dashboard state
         await OBR.action.setWidth(450);
         await OBR.action.setHeight(110);
 
@@ -132,8 +140,11 @@
             document.getElementById('browserTitle').innerText = title;
             frame.src = url;
             browser.style.display = 'flex';
+            
+            // Set window size to specific link settings
             await OBR.action.setWidth(parseInt(w));
             await OBR.action.setHeight(parseInt(h));
+            window.scrollTo(0, 0);
         };
 
         const resetUI = async () => {
@@ -141,13 +152,14 @@
             document.getElementById('linkFrame').src = '';
             document.getElementById('gmPanel').style.display = 'none';
             isSettingsOpen = false;
-            await OBR.action.setWidth(450); // Maintain consistent width
+            await OBR.action.setWidth(450); 
             await OBR.action.setHeight(110);
+            window.scrollTo(0, 0);
             window.focus();
         };
 
         document.getElementById('popOutNow').onclick = () => {
-            window.open(currentActiveUrl, '_blank', `width=${currentActiveSize.w},height=${currentActiveSize.h},location=no,status=no`);
+            window.open(currentActiveUrl, '_blank', `width=${currentActiveSize.w},height=${currentActiveSize.h},location=no`);
             resetUI(); 
         };
 
@@ -155,13 +167,16 @@
             document.getElementById('browserView').style.display = 'none';
             document.getElementById('linkFrame').src = '';
             
-            // Revert size based on whether settings were open, but width stays 450
+            // Revert back to Dashboard Width
             await OBR.action.setWidth(450);
+            
+            // Revert back to either 500 (settings) or 110 (buttons)
             if (isSettingsOpen) {
                 await OBR.action.setHeight(500);
             } else {
                 await OBR.action.setHeight(110);
             }
+            window.scrollTo(0, 0);
             window.focus(); 
         };
 
@@ -229,9 +244,9 @@
             const panel = document.getElementById('gmPanel');
             isSettingsOpen = panel.style.display !== 'block';
             panel.style.display = isSettingsOpen ? 'block' : 'none';
-            
-            // Width remains 450 regardless of setting state
+            // While on dashboard, toggle between 110 and 500
             await OBR.action.setHeight(isSettingsOpen ? 500 : 110);
+            window.scrollTo(0, 0);
         };
 
         setupInputs();
