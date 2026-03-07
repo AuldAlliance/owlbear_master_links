@@ -220,10 +220,13 @@
         };
 
         const loadData = async () => {
+            const role = await OBR.player.getRole(); // Check current user's role
             const meta = await OBR.room.getMetadata();
             const links = meta[META_KEY] || [];
             const config = meta[GLOBAL_KEY] || { w: 500, h: 600 };
+        
             if (role === "GM") {
+                // Show the settings inputs only to GM
                 document.getElementById('g-w').value = config.w || '';
                 document.getElementById('g-h').value = config.h || '';
                 links.forEach((l, i) => {
@@ -235,9 +238,22 @@
                         document.getElementById(`m-${i}`).value = l.mode || 'pop';
                     }
                 });
+                // Render buttons for GM
+                renderButtons(links, config);
+            } else {
+                // Clear the container for Players so they see nothing
+                document.getElementById('buttonContainer').innerHTML = 
+                    '<div style="font-size: 12px; color: #666; padding: 10px;">GM Dashboard (Hidden from Players)</div>';
             }
-            renderButtons(links, config);
         };
+
+        // Update the listener to also check the role
+        OBR.room.onMetadataChange(async (meta) => {
+            const role = await OBR.player.getRole();
+            if (role === "GM") {
+                renderButtons(meta[META_KEY] || [], meta[GLOBAL_KEY] || {});
+            }
+        });
 
         document.getElementById('toggleSettings').onclick = async (e) => {
             e.preventDefault(); e.stopPropagation();
