@@ -10,8 +10,8 @@
             --bg: transparent; 
             --panel: rgba(20, 20, 20, 0.95);
             --border: rgba(255, 255, 255, 0.15);
-            --active-in: #2e7d32;   /* Green for In-Extension */
-            --active-pop: #1565c0;  /* Blue for Pop-Out */
+            --active-in: #4caf50;   /* Green */
+            --active-pop: #64b5f6;  /* Blue */
         }
         body { 
             background: transparent; color: #eee; 
@@ -37,10 +37,9 @@
             transition: all 0.2s; text-align: center;
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
-        /* Color Coding */
-        .action-btn.mode-in { background: var(--active-in); border-color: #4caf50; }
-        .action-btn.mode-pop { background: var(--active-pop); border-color: #64b5f6; }
-        
+        /* Dashboard Button Colors */
+        .action-btn.mode-in { background: #2e7d32; border-color: var(--active-in); }
+        .action-btn.mode-pop { background: #1565c0; border-color: var(--active-pop); }
         .action-btn:not(.active) { opacity: 0.3; cursor: default; border-style: dashed; background: none; }
         
         #browserView { 
@@ -48,7 +47,6 @@
             background: #111; position: absolute; top:0; left:0; right:0; bottom:0; z-index: 100; 
         }
         .browser-bar { background: #222; padding: 4px 8px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--border); }
-        
         .cached-frame { flex-grow: 1; border: none; background: white; width: 100%; height: 100%; }
 
         .icon-btn { background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; padding: 4px; font-size: 14px;}
@@ -61,10 +59,14 @@
         }
         .row { display: flex; gap: 4px; margin-bottom: 6px; align-items: center; }
         input, select { background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: white; padding: 4px; font-size: 11px; border-radius: 4px; }
+        
+        /* Settings Color Logic */
         .label-in { width: 70px; }
         .url-in { flex-grow: 1; }
-        .dim-in { width: 45px; text-align: center; color: var(--primary); }
-        .mode-sel { width: 60px; font-size: 9px; }
+        .dim-in { width: 45px; text-align: center; color: white !important; } /* Window size text now white */
+        .mode-sel { width: 60px; font-size: 9px; font-weight: bold; }
+        .mode-sel.sel-in { color: var(--active-in); }
+        .mode-sel.sel-pop { color: var(--active-pop); }
     </style>
 </head>
 <body>
@@ -115,6 +117,11 @@
         await OBR.action.setWidth(450);
         await OBR.action.setHeight(110);
 
+        const updateSelectColor = (el) => {
+            el.classList.remove('sel-in', 'sel-pop');
+            el.classList.add(el.value === 'in' ? 'sel-in' : 'sel-pop');
+        };
+
         const setupInputs = () => {
             const list = document.getElementById('inputList');
             for (let i = 0; i < 10; i++) {
@@ -130,8 +137,11 @@
                         <option value="in">In</option>
                     </select>
                 `;
-                row.querySelectorAll('input, select').forEach(el => el.onchange = () => saveData());
+                const sel = row.querySelector('.mode-sel');
+                sel.onchange = (e) => { updateSelectColor(e.target); saveData(); };
+                row.querySelectorAll('input').forEach(el => el.onchange = () => saveData());
                 list.appendChild(row);
+                updateSelectColor(sel);
             }
             document.getElementById('g-w').onchange = () => saveData();
             document.getElementById('g-h').onchange = () => saveData();
@@ -159,7 +169,6 @@
             browserView.style.display = 'flex';
             await OBR.action.setWidth(parseInt(w));
             await OBR.action.setHeight(parseInt(h));
-            // Bug Fix: Reset scroll on entry
             window.scrollTo(0, 0);
         };
 
@@ -167,23 +176,27 @@
             if (iframeCache[currentActiveUrl]) iframeCache[currentActiveUrl].src = currentActiveUrl;
         };
 
-        document.getElementById('popOutNow').onclick = () => {
-            window.open(currentActiveUrl, '_blank', `width=${currentActiveSize.w},height=${currentActiveSize.h}`);
-            closeView();
-        };
-
         const closeView = async () => {
             document.getElementById('browserView').style.display = 'none';
             await OBR.action.setWidth(450);
             await OBR.action.setHeight(isSettingsOpen ? 500 : 110);
             
-            // Bug Fix: Hard reset scroll for both window and dashboard container
+            // Fix for the "shunting" bug
             window.scrollTo(0, 0);
-            document.getElementById('dashboardView').scrollTop = 0;
+            const dash = document.getElementById('dashboardView');
+            dash.scrollTop = 0;
+            dash.style.display = 'none'; // Force a layout recalculation
+            dash.offsetHeight; 
+            dash.style.display = 'flex';
             window.focus();
         };
 
         document.getElementById('closeBrowser').onclick = closeView;
+
+        document.getElementById('popOutNow').onclick = () => {
+            window.open(currentActiveUrl, '_blank', `width=${currentActiveSize.w},height=${currentActiveSize.h}`);
+            closeView();
+        };
 
         const renderButtons = (links, config = {}) => {
             const container = document.getElementById('buttonContainer');
@@ -193,9 +206,7 @@
                 btn.className = 'action-btn';
                 if (link.url?.trim()) {
                     btn.classList.add('active');
-                    // APPLY COLOR CODING
                     btn.classList.add(link.mode === 'in' ? 'mode-in' : 'mode-pop');
-                    
                     btn.innerText = link.name || `L${i+1}`;
                     btn.onclick = () => {
                         const url = link.url.startsWith('http') ? link.url : `https://${link.url}`;
@@ -237,12 +248,14 @@
                 document.getElementById('g-w').value = config.w || '';
                 document.getElementById('g-h').value = config.h || '';
                 links.forEach((l, i) => {
-                    if (document.getElementById(`n-${i}`)) {
+                    const sel = document.getElementById(`m-${i}`);
+                    if (sel) {
                         document.getElementById(`n-${i}`).value = l.name || '';
                         document.getElementById(`u-${i}`).value = l.url || '';
                         document.getElementById(`w-${i}`).value = l.w || '';
                         document.getElementById(`h-${i}`).value = l.h || '';
-                        document.getElementById(`m-${i}`).value = l.mode || 'pop';
+                        sel.value = l.mode || 'pop';
+                        updateSelectColor(sel);
                     }
                 });
                 renderButtons(links, config);
