@@ -44,7 +44,9 @@
             background: #111; position: absolute; top:0; left:0; right:0; bottom:0; z-index: 100; 
         }
         .browser-bar { background: #222; padding: 4px 8px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--border); }
-        #linkFrame { flex-grow: 1; border: none; background: white; width: 100%; height: 100%; }
+        
+        /* New style for the dynamic iframes */
+        .cached-frame { flex-grow: 1; border: none; background: white; width: 100%; height: 100%; }
 
         .icon-btn { background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; padding: 4px; font-size: 14px;}
         .icon-btn:hover { color: white; }
@@ -85,10 +87,10 @@
         <div class="browser-bar">
             <button class="action-btn active" id="closeBrowser" style="padding: 4px 10px; font-size: 9px;">← BACK</button>
             <span id="browserTitle" style="font-size: 10px; color: #aaa; flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
+            <button class="icon-btn" id="refreshFrame" title="Reload Page">🔄</button>
             <button class="icon-btn" id="popOutNow" title="Open in New Window">↗️</button>
         </div>
-        <iframe id="linkFrame" sandbox="allow-forms allow-scripts allow-same-origin"></iframe>
-    </div>
+        </div>
 </div>
 
 <script type="module">
@@ -101,6 +103,9 @@
     let currentActiveUrl = "";
     let currentActiveSize = { w: 500, h: 600 };
     let isSettingsOpen = false; 
+
+    // THE KEY: Stores iframes in memory so they don't reload
+    const iframeCache = {};
 
     OBR.onReady(async () => {
         const role = await OBR.player.getRole();
@@ -135,48 +140,49 @@
         const openInWindow = async (url, title, w, h) => {
             currentActiveUrl = url;
             currentActiveSize = { w, h };
-            const browser = document.getElementById('browserView');
-            const frame = document.getElementById('linkFrame');
-            document.getElementById('browserTitle').innerText = title;
-            frame.src = url;
-            browser.style.display = 'flex';
             
-            // Set window size to specific link settings
+            const browserView = document.getElementById('browserView');
+            document.getElementById('browserTitle').innerText = title;
+
+            // Hide all existing iframes in the cache
+            Object.values(iframeCache).forEach(frame => frame.style.display = 'none');
+
+            // If this URL hasn't been opened yet, create a new persistent iframe
+            if (!iframeCache[url]) {
+                const frame = document.createElement('iframe');
+                frame.className = "cached-frame";
+                frame.src = url;
+                frame.sandbox = "allow-forms allow-scripts allow-same-origin";
+                browserView.appendChild(frame);
+                iframeCache[url] = frame;
+            } else {
+                // It exists! Just show it again. Scroll/popups are preserved.
+                iframeCache[url].style.display = 'block';
+            }
+
+            browserView.style.display = 'flex';
+            
             await OBR.action.setWidth(parseInt(w));
             await OBR.action.setHeight(parseInt(h));
-            window.scrollTo(0, 0);
         };
 
-        const resetUI = async () => {
-            document.getElementById('browserView').style.display = 'none';
-            document.getElementById('linkFrame').src = '';
-            document.getElementById('gmPanel').style.display = 'none';
-            isSettingsOpen = false;
-            await OBR.action.setWidth(450); 
-            await OBR.action.setHeight(110);
-            window.scrollTo(0, 0);
-            window.focus();
+        // UI Buttons
+        document.getElementById('refreshFrame').onclick = () => {
+            if (iframeCache[currentActiveUrl]) {
+                iframeCache[currentActiveUrl].src = currentActiveUrl; // Forces reload
+            }
         };
 
         document.getElementById('popOutNow').onclick = () => {
-            window.open(currentActiveUrl, '_blank', `width=${currentActiveSize.w},height=${currentActiveSize.h},location=no`);
-            resetUI(); 
+            window.open(currentActiveUrl, '_blank', `width=${currentActiveSize.w},height=${currentActiveSize.h}`);
         };
 
         document.getElementById('closeBrowser').onclick = async () => {
             document.getElementById('browserView').style.display = 'none';
-            document.getElementById('linkFrame').src = '';
             
-            // Revert back to Dashboard Width
+            // Revert back to Dashboard dimensions
             await OBR.action.setWidth(450);
-            
-            // Revert back to either 500 (settings) or 110 (buttons)
-            if (isSettingsOpen) {
-                await OBR.action.setHeight(500);
-            } else {
-                await OBR.action.setHeight(110);
-            }
-            window.scrollTo(0, 0);
+            await OBR.action.setHeight(isSettingsOpen ? 500 : 110);
             window.focus(); 
         };
 
@@ -215,18 +221,20 @@
                     mode: document.getElementById(`m-${i}`).value
                 });
             }
-            const config = { w: document.getElementById('g-w').value, h: document.getElementById('g-h').value };
+            const config = { 
+                w: document.getElementById('g-w').value, 
+                h: document.getElementById('g-h').value 
+            };
             await OBR.room.setMetadata({ [META_KEY]: links, [GLOBAL_KEY]: config });
         };
 
         const loadData = async () => {
-            const role = await OBR.player.getRole(); // Check current user's role
+            const role = await OBR.player.getRole();
             const meta = await OBR.room.getMetadata();
             const links = meta[META_KEY] || [];
             const config = meta[GLOBAL_KEY] || { w: 500, h: 600 };
         
             if (role === "GM") {
-                // Show the settings inputs only to GM
                 document.getElementById('g-w').value = config.w || '';
                 document.getElementById('g-h').value = config.h || '';
                 links.forEach((l, i) => {
@@ -238,16 +246,13 @@
                         document.getElementById(`m-${i}`).value = l.mode || 'pop';
                     }
                 });
-                // Render buttons for GM
                 renderButtons(links, config);
             } else {
-                // Clear the container for Players so they see nothing
                 document.getElementById('buttonContainer').innerHTML = 
                     '<div style="font-size: 12px; color: #666; padding: 10px;">GM Dashboard (Hidden from Players)</div>';
             }
         };
 
-        // Update the listener to also check the role
         OBR.room.onMetadataChange(async (meta) => {
             const role = await OBR.player.getRole();
             if (role === "GM") {
@@ -256,18 +261,14 @@
         });
 
         document.getElementById('toggleSettings').onclick = async (e) => {
-            e.preventDefault(); e.stopPropagation();
             const panel = document.getElementById('gmPanel');
             isSettingsOpen = panel.style.display !== 'block';
             panel.style.display = isSettingsOpen ? 'block' : 'none';
-            // While on dashboard, toggle between 110 and 500
             await OBR.action.setHeight(isSettingsOpen ? 500 : 110);
-            window.scrollTo(0, 0);
         };
 
         setupInputs();
         await loadData();
-        OBR.room.onMetadataChange(meta => renderButtons(meta[META_KEY] || [], meta[GLOBAL_KEY] || {}));
     });
 </script>
 </body>
