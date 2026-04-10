@@ -37,7 +37,6 @@
             transition: all 0.2s; text-align: center;
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
-        /* Dashboard Button Colors */
         .action-btn.mode-in { background: #2e7d32; border-color: var(--active-in); }
         .action-btn.mode-pop { background: #1565c0; border-color: var(--active-pop); }
         .action-btn:not(.active) { opacity: 0.3; cursor: default; border-style: dashed; background: none; }
@@ -60,10 +59,9 @@
         .row { display: flex; gap: 4px; margin-bottom: 6px; align-items: center; }
         input, select { background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: white; padding: 4px; font-size: 11px; border-radius: 4px; }
         
-        /* Settings Color Logic */
+        .dim-in { width: 45px; text-align: center; color: white !important; }
         .label-in { width: 70px; }
         .url-in { flex-grow: 1; }
-        .dim-in { width: 45px; text-align: center; color: white !important; } /* Window size text now white */
         .mode-sel { width: 60px; font-size: 9px; font-weight: bold; }
         .mode-sel.sel-in { color: var(--active-in); }
         .mode-sel.sel-pop { color: var(--active-pop); }
@@ -92,6 +90,12 @@
         <div class="browser-bar">
             <button class="action-btn mode-in" id="closeBrowser" style="padding: 4px 10px; font-size: 9px;">← BACK</button>
             <span id="browserTitle" style="font-size: 10px; color: #aaa; flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"></span>
+            
+            <span style="font-size: 9px; color: #666;">W:</span>
+            <input type="number" id="live-w" class="dim-in">
+            <span style="font-size: 9px; color: #666;">H:</span>
+            <input type="number" id="live-h" class="dim-in">
+            
             <button class="icon-btn" id="refreshFrame" title="Reload Page">🔄</button>
             <button class="icon-btn" id="popOutNow" title="Open in New Window">↗️</button>
         </div>
@@ -107,6 +111,7 @@
     
     let currentActiveUrl = "";
     let currentActiveSize = { w: 500, h: 600 };
+    let currentActiveIndex = -1; 
     let isSettingsOpen = false; 
     const iframeCache = {};
 
@@ -147,11 +152,15 @@
             document.getElementById('g-h').onchange = () => saveData();
         };
 
-        const openInWindow = async (url, title, w, h) => {
+        const openInWindow = async (url, title, w, h, index) => {
             currentActiveUrl = url;
             currentActiveSize = { w, h };
+            currentActiveIndex = index;
+            
             const browserView = document.getElementById('browserView');
             document.getElementById('browserTitle').innerText = title;
+            document.getElementById('live-w').value = w;
+            document.getElementById('live-h').value = h;
 
             Object.values(iframeCache).forEach(frame => frame.style.display = 'none');
 
@@ -172,6 +181,22 @@
             window.scrollTo(0, 0);
         };
 
+        // Live Resize Logic
+        const handleLiveResize = async () => {
+            const nw = document.getElementById('live-w').value;
+            const nh = document.getElementById('live-h').value;
+            if (currentActiveIndex !== -1) {
+                document.getElementById(`w-${currentActiveIndex}`).value = nw;
+                document.getElementById(`h-${currentActiveIndex}`).value = nh;
+                await OBR.action.setWidth(parseInt(nw));
+                await OBR.action.setHeight(parseInt(nh));
+                saveData();
+            }
+        };
+
+        document.getElementById('live-w').onchange = handleLiveResize;
+        document.getElementById('live-h').onchange = handleLiveResize;
+
         document.getElementById('refreshFrame').onclick = () => {
             if (iframeCache[currentActiveUrl]) iframeCache[currentActiveUrl].src = currentActiveUrl;
         };
@@ -180,15 +205,12 @@
             document.getElementById('browserView').style.display = 'none';
             await OBR.action.setWidth(450);
             await OBR.action.setHeight(isSettingsOpen ? 500 : 110);
-            
-            // Fix for the "shunting" bug
             window.scrollTo(0, 0);
             const dash = document.getElementById('dashboardView');
             dash.scrollTop = 0;
-            dash.style.display = 'none'; // Force a layout recalculation
+            dash.style.display = 'none'; 
             dash.offsetHeight; 
             dash.style.display = 'flex';
-            window.focus();
         };
 
         document.getElementById('closeBrowser').onclick = closeView;
@@ -213,7 +235,7 @@
                         const w = link.w || config.w || 500;
                         const h = link.h || config.h || 600;
                         if (link.mode === 'in') {
-                            openInWindow(url, link.name || url, w, h);
+                            openInWindow(url, link.name || url, w, h, i);
                         } else {
                             window.open(url, '_blank', `width=${w},height=${h}`);
                         }
