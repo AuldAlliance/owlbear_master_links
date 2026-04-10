@@ -7,29 +7,50 @@
     <style>
         :root {
             --primary: #2196F3;
-            --bg: transparent; 
             --panel: rgba(20, 20, 20, 0.95);
             --border: rgba(255, 255, 255, 0.15);
-            --active-in: #4caf50;   /* Green */
-            --active-pop: #64b5f6;  /* Blue */
+            --active-in: #4caf50;
+            --active-pop: #64b5f6;
         }
+
+        /* Essential for dynamic resizing: html and body must allow expansion */
+        html, body { 
+            height: 100%; 
+            margin: 0; 
+            padding: 0; 
+            overflow: hidden; 
+            background: transparent;
+        }
+
         body { 
-            background: transparent; color: #eee; 
+            color: #eee; 
             font-family: 'Segoe UI', Roboto, sans-serif; 
-            padding: 4px; margin: 0; overflow: hidden; height: 100vh;
-            display: flex; flex-direction: column;
+            display: flex; 
+            flex-direction: column;
         }
-        .container { display: flex; flex-direction: column; height: 100%; position: relative; }
+
+        .container { 
+            display: flex; 
+            flex-direction: column; 
+            flex: 1; 
+            position: relative;
+            padding: 4px;
+        }
         
         #dashboardView { 
-            display: flex; flex-direction: column; 
-            overflow-y: auto; overflow-x: hidden;
-            width: 100%; height: 100%;
+            display: flex; 
+            flex-direction: column; 
+            overflow-y: auto; 
+            flex: 1;
         }
+
         .link-grid {
-            display: grid; grid-template-columns: repeat(5, 1fr);
-            gap: 6px; margin-bottom: 4px;
+            display: grid; 
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px; 
+            margin-bottom: 4px;
         }
+
         .action-btn {
             background: rgba(255,255,255,0.1); border: 1px solid var(--border);
             color: white; padding: 8px 2px; border-radius: 6px;
@@ -37,16 +58,36 @@
             transition: all 0.2s; text-align: center;
             overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
+
         .action-btn.mode-in { background: #2e7d32; border-color: var(--active-in); }
         .action-btn.mode-pop { background: #1565c0; border-color: var(--active-pop); }
         .action-btn:not(.active) { opacity: 0.3; cursor: default; border-style: dashed; background: none; }
         
+        /* Browser View Overlays everything when active */
         #browserView { 
-            display: none; flex-direction: column; height: 100%; 
-            background: #111; position: absolute; top:0; left:0; right:0; bottom:0; z-index: 100; 
+            display: none; 
+            flex-direction: column; 
+            position: absolute; 
+            top: 0; left: 0; right: 0; bottom: 0; 
+            background: #111; 
+            z-index: 100; 
         }
-        .browser-bar { background: #222; padding: 4px 8px; display: flex; gap: 8px; align-items: center; border-bottom: 1px solid var(--border); }
-        .cached-frame { flex-grow: 1; border: none; background: white; width: 100%; height: 100%; }
+
+        .browser-bar { 
+            background: #222; 
+            padding: 4px 8px; 
+            display: flex; 
+            gap: 8px; 
+            align-items: center; 
+            border-bottom: 1px solid var(--border); 
+        }
+
+        .cached-frame { 
+            flex: 1; 
+            border: none; 
+            background: white; 
+            width: 100%; 
+        }
 
         .icon-btn { background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; padding: 4px; font-size: 14px;}
         .icon-btn:hover { color: white; }
@@ -56,10 +97,11 @@
             margin-top: 8px; padding: 12px; border: 1px solid var(--border);
             margin-bottom: 20px;
         }
+
         .row { display: flex; gap: 4px; margin-bottom: 6px; align-items: center; }
         input, select { background: rgba(0,0,0,0.5); border: 1px solid var(--border); color: white; padding: 4px; font-size: 11px; border-radius: 4px; }
         
-        .dim-in { width: 45px; text-align: center; color: white !important; }
+        .dim-in { width: 50px; text-align: center; color: white !important; }
         .label-in { width: 70px; }
         .url-in { flex-grow: 1; }
         .mode-sel { width: 60px; font-size: 9px; font-weight: bold; }
@@ -110,7 +152,6 @@
     const GLOBAL_KEY = `${ID}/config`;
     
     let currentActiveUrl = "";
-    let currentActiveSize = { w: 500, h: 600 };
     let currentActiveIndex = -1; 
     let isSettingsOpen = false; 
     const iframeCache = {};
@@ -119,6 +160,7 @@
         const role = await OBR.player.getRole();
         if (role === "GM") document.getElementById('gmOnly').style.display = 'block';
         
+        // Initial setup size
         await OBR.action.setWidth(450);
         await OBR.action.setHeight(110);
 
@@ -154,7 +196,6 @@
 
         const openInWindow = async (url, title, w, h, index) => {
             currentActiveUrl = url;
-            currentActiveSize = { w, h };
             currentActiveIndex = index;
             
             const browserView = document.getElementById('browserView');
@@ -162,6 +203,7 @@
             document.getElementById('live-w').value = w;
             document.getElementById('live-h').value = h;
 
+            // Hide all frames, then show/create the current one
             Object.values(iframeCache).forEach(frame => frame.style.display = 'none');
 
             if (!iframeCache[url]) {
@@ -176,20 +218,27 @@
             }
 
             browserView.style.display = 'flex';
+            
+            // Apply requested size to OBR
             await OBR.action.setWidth(parseInt(w));
             await OBR.action.setHeight(parseInt(h));
             window.scrollTo(0, 0);
         };
 
-        // Live Resize Logic
         const handleLiveResize = async () => {
-            const nw = document.getElementById('live-w').value;
-            const nh = document.getElementById('live-h').value;
-            if (currentActiveIndex !== -1) {
+            const nw = parseInt(document.getElementById('live-w').value);
+            const nh = parseInt(document.getElementById('live-h').value);
+            
+            if (currentActiveIndex !== -1 && !isNaN(nw) && !isNaN(nh)) {
+                // Update background settings inputs
                 document.getElementById(`w-${currentActiveIndex}`).value = nw;
                 document.getElementById(`h-${currentActiveIndex}`).value = nh;
-                await OBR.action.setWidth(parseInt(nw));
-                await OBR.action.setHeight(parseInt(nh));
+                
+                // Execute OBR resize
+                await OBR.action.setWidth(nw);
+                await OBR.action.setHeight(nh);
+                
+                // Persist new defaults
                 saveData();
             }
         };
@@ -205,6 +254,8 @@
             document.getElementById('browserView').style.display = 'none';
             await OBR.action.setWidth(450);
             await OBR.action.setHeight(isSettingsOpen ? 500 : 110);
+            
+            // Shunting bug reset
             window.scrollTo(0, 0);
             const dash = document.getElementById('dashboardView');
             dash.scrollTop = 0;
@@ -216,7 +267,9 @@
         document.getElementById('closeBrowser').onclick = closeView;
 
         document.getElementById('popOutNow').onclick = () => {
-            window.open(currentActiveUrl, '_blank', `width=${currentActiveSize.w},height=${currentActiveSize.h}`);
+            const w = document.getElementById('live-w').value;
+            const h = document.getElementById('live-h').value;
+            window.open(currentActiveUrl, '_blank', `width=${w},height=${h}`);
             closeView();
         };
 
